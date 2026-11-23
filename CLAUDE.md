@@ -75,6 +75,16 @@ gh release create vX.Y.Z rally4ver-android-vX.Y.Z.apk --title "Rally4ver X.Y.Z (
 
 arm64-only keeps the APK ~38 MB (all ABIs: ~120 MB). Bump `version` in app.json. Signed with the template debug key (fine for sideloading; a real keystore is needed before Play Store, and updates must keep the same key). Repo: github.com/LifeOfAitor/rally4ver.
 
+## Personal iPhone install (free Apple account)
+
+```bash
+npx expo prebuild --platform ios --clean
+cd ios && xcodebuild -workspace Rally4ver.xcworkspace -scheme Rally4ver -configuration Release -destination id=<iPhone UDID> -derivedDataPath build/device -allowProvisioningUpdates DEVELOPMENT_TEAM=Z9CW88PP6L CODE_SIGN_STYLE=Automatic build
+xcrun devicectl device install app --device <UDID> build/device/Build/Products/Release-iphoneos/Rally4ver.app
+```
+
+`xcrun devicectl list devices` gives the UDID. Free (Personal Team) signing expires after 7 days: rebuild and reinstall; data is kept. Free teams can't sign Push Notifications, so never add `expo-notifications` (or another plugin that adds `aps-environment`). First install: Settings → General → VPN & Device Management → trust.
+
 ## Voice
 
 Voices offered in AJUSTES are listed in `scripts/voices.json` (id, label, Piper model, speaker); clips go to `assets/voice/<id>/` and `clips.ts` exports `VOICES` + `DEFAULT_VOICE` (the second entry). Regenerate after changing the vocabulary or the voices (Piper needs Python 3.9–3.13 and ffmpeg):
