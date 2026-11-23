@@ -1,4 +1,12 @@
-import { Camera, type CameraRef, GeoJSONSource, Layer, Map, NativeUserLocation, ViewAnnotation } from '@maplibre/maplibre-react-native';
+import {
+  Camera,
+  type CameraRef,
+  GeoJSONSource,
+  Layer,
+  Map,
+  NativeUserLocation,
+  ViewAnnotation,
+} from '@maplibre/maplibre-react-native';
 import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -10,6 +18,9 @@ import { colors, MAP_STYLE } from './theme';
 interface Props {
   stops: LatLon[];
   route: LatLon[] | null;
+  /** Other routes the user can pick, drawn in grey under the selected one. */
+  alternatives?: { index: number; coordinates: LatLon[] }[];
+  onSelectAlternative?: (index: number) => void;
   path: Path | null;
   notes: Pacenote[];
   onPress?: (p: LatLon) => void;
@@ -27,17 +38,46 @@ function stopLabel(i: number, count: number) {
   return String(i);
 }
 
-export function StageMap({ stops, route, path, notes, onPress, onMoveStop, onLongPressStop, bottomInset = 0 }: Props) {
+export function StageMap({
+  stops,
+  route,
+  alternatives = [],
+  onSelectAlternative,
+  path,
+  notes,
+  onPress,
+  onMoveStop,
+  onLongPressStop,
+  bottomInset = 0,
+}: Props) {
   const camera = useRef<CameraRef>(null);
 
   const line = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
       features: route
-        ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: route.map((p) => [p.longitude, p.latitude]) } }]
+        ? [
+            {
+              type: 'Feature',
+              properties: {},
+              geometry: { type: 'LineString', coordinates: route.map((p) => [p.longitude, p.latitude]) },
+            },
+          ]
         : [],
     }),
     [route],
+  );
+
+  const altLines = useMemo<GeoJSON.FeatureCollection>(
+    () => ({
+      type: 'FeatureCollection',
+      features: alternatives.map((alt) => ({
+        type: 'Feature',
+        properties: { index: alt.index },
+        geometry: { type: 'LineString', coordinates: alt.coordinates.map((p) => [p.longitude, p.latitude]) },
+      })),
+    }),
+    [alternatives],
   );
 
   const notePoints = useMemo<GeoJSON.FeatureCollection>(() => {
@@ -67,7 +107,10 @@ export function StageMap({ stops, route, path, notes, onPress, onMoveStop, onLon
       s = Math.min(s, p.latitude);
       n = Math.max(n, p.latitude);
     }
-    camera.current?.fitBounds([w, s, e, n], { padding: { top: 80, right: 40, bottom: 40 + bottomInset, left: 40 }, duration: 600 });
+    camera.current?.fitBounds([w, s, e, n], {
+      padding: { top: 80, right: 40, bottom: 40 + bottomInset, left: 40 },
+      duration: 600,
+    });
   }, [route, bottomInset]);
 
   return (
@@ -81,9 +124,44 @@ export function StageMap({ stops, route, path, notes, onPress, onMoveStop, onLon
     >
       <Camera ref={camera} initialViewState={{ center: [-3.7038, 40.4168], zoom: 6 }} />
       <NativeUserLocation />
+      <GeoJSONSource
+        id="alternatives"
+        data={altLines}
+        hitbox={{ top: 14, right: 14, bottom: 14, left: 14 }}
+        onPress={(e) => {
+          const index = e.nativeEvent.features[0]?.properties?.index;
+          if (typeof index === 'number') {
+            e.stopPropagation(); // a tap on a grey line selects it instead of adding a stop
+            onSelectAlternative?.(index);
+          }
+        }}
+      >
+        <Layer
+          id="alt-casing"
+          type="line"
+          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+          paint={{ 'line-color': '#000000', 'line-width': 8 }}
+        />
+        <Layer
+          id="alt-line"
+          type="line"
+          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+          paint={{ 'line-color': '#7A7A85', 'line-width': 5 }}
+        />
+      </GeoJSONSource>
       <GeoJSONSource id="route" data={line}>
-        <Layer id="route-casing" type="line" layout={{ 'line-join': 'round', 'line-cap': 'round' }} paint={{ 'line-color': '#000000', 'line-width': 8 }} />
-        <Layer id="route-line" type="line" layout={{ 'line-join': 'round', 'line-cap': 'round' }} paint={{ 'line-color': colors.accent, 'line-width': 5 }} />
+        <Layer
+          id="route-casing"
+          type="line"
+          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+          paint={{ 'line-color': '#000000', 'line-width': 8 }}
+        />
+        <Layer
+          id="route-line"
+          type="line"
+          layout={{ 'line-join': 'round', 'line-cap': 'round' }}
+          paint={{ 'line-color': colors.accent, 'line-width': 5 }}
+        />
       </GeoJSONSource>
       <GeoJSONSource id="notes" data={notePoints}>
         <Layer

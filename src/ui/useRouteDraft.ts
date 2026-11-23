@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { LatLon } from '../core/geo';
 import { generatePacenotes, type Pacenote } from '../core/pacenotes';
 import { buildPath, type Path } from '../core/path';
-import { fetchRoute, type RoutedRoute } from '../data/routing';
+import { mostSimilar } from '../core/routeMatch';
+import { fetchRoutes, type RoutedRoute } from '../data/routing';
 
 export interface RouteDraft {
   stops: LatLon[];
-  setStops: (stops: LatLon[]) => void;
+  /** Replace the stops; `preferredAlternative` pre-selects one of the router's alternatives. */
+  setStops: (stops: LatLon[], preferredAlternative?: number) => void;
+  /** All routes the router offered (main first); one is selected. */
+  routes: RoutedRoute[];
+  selected: number;
+  select: (index: number) => void;
   route: RoutedRoute | null;
   path: Path | null;
   notes: Pacenote[];
@@ -15,17 +21,27 @@ export interface RouteDraft {
   error: string | null;
 }
 
-/** Stops being edited on the map → routed geometry → pacenotes. */
+/** Stops being edited on the map → routed alternatives → selected route → pacenotes. */
 export function useRouteDraft(initialStops: LatLon[] = []): RouteDraft {
-  const [stops, setStops] = useState<LatLon[]>(initialStops);
-  const [route, setRoute] = useState<RoutedRoute | null>(null);
+  const [stops, setStopsState] = useState<LatLon[]>(initialStops);
+  const [routes, setRoutes] = useState<RoutedRoute[]>([]);
+  const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
+  /** Explicit choice from an imported link; otherwise we follow `chosen`. */
+  const preferred = useRef<number | undefined>(undefined);
+  /** Geometry of the route the user had selected, to keep that choice across recalculations. */
+  const chosen = useRef<LatLon[] | null>(null);
+
+  const setStops = useCallback((next: LatLon[], preferredAlternative?: number) => {
+    preferred.current = preferredAlternative;
+    setStopsState(next);
+  }, []);
 
   useEffect(() => {
     if (stops.length < 2) {
-      setRoute(null);
+      setRoutes([]);
       setError(null);
       return;
     }
@@ -34,22 +50,35 @@ export function useRouteDraft(initialStops: LatLon[] = []): RouteDraft {
     setError(null);
     // Small debounce so dragging several stops doesn't spam the server.
     const timer = setTimeout(() => {
-      fetchRoute(stops)
-        .then((r) => id === requestId.current && setRoute(r))
+      fetchRoutes(stops)
+        .then((r) => {
+          if (id !== requestId.current) return;
+          setRoutes(r);
+          // Reversing or moving a stop must not throw away the road the user picked.
+          const pick =
+            preferred.current !== undefined
+              ? Math.min(preferred.current, r.length - 1)
+              : chosen.current
+                ? mostSimilar(
+                    r.map((x) => x.coordinates),
+                    chosen.current,
+                  )
+                : 0;
+          preferred.current = undefined;
+          setSelected(pick);
+        })
         .catch((e: unknown) => id === requestId.current && setError(e instanceof Error ? e.message : String(e)))
         .finally(() => id === requestId.current && setLoading(false));
     }, 300);
     return () => clearTimeout(timer);
   }, [stops]);
 
+  const route = routes[selected] ?? null;
+  useEffect(() => {
+    if (route) chosen.current = route.coordinates;
+  }, [route]);
   const path = useMemo(() => (route && route.coordinates.length > 1 ? buildPath(route.coordinates) : null), [route]);
   const notes = useMemo(() => (path ? generatePacenotes(path) : []), [path]);
 
-  return { stops, setStops, route, path, notes, loading, error };
-}
-
-/** Inserts a new stop between the last waypoint and the destination. */
-export function addStop(stops: LatLon[], p: LatLon): LatLon[] {
-  if (stops.length < 2) return [...stops, p];
-  return [...stops.slice(0, -1), p, stops[stops.length - 1]];
+  return { stops, setStops, routes, selected, select: setSelected, route, path, notes, loading, error };
 }

@@ -18,14 +18,13 @@ export function distanceMeters(a: LatLon, b: LatLon): number {
   const dLat = toRad(b.latitude - a.latitude);
   const dLon = toRad(b.longitude - a.longitude);
   const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.latitude)) * Math.cos(toRad(b.latitude)) * Math.sin(dLon / 2) ** 2;
   return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
 /** Shortest angular difference between two bearings in degrees (0–180). */
 export function angularDiff(a: number, b: number): number {
-  return Math.abs((((a - b + 540) % 360) + 360) % 360 - 180);
+  return Math.abs(((((a - b + 540) % 360) + 360) % 360) - 180);
 }
 
 /** Wraps an angle in radians to (-π, π]. */

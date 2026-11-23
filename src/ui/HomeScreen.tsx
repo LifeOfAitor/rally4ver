@@ -55,7 +55,9 @@ export function HomeScreen({ onNew, onOpen }: Props) {
           stages ? (
             <View style={styles.empty}>
               <Ionicons name="flag-outline" size={40} color={colors.muted} />
-              <Text style={styles.emptyText}>Aún no tienes tramos. Crea uno en el mapa o importa una ruta de Google Maps.</Text>
+              <Text style={styles.emptyText}>
+                Aún no tienes tramos. Crea uno en el mapa o importa una ruta de Google Maps.
+              </Text>
             </View>
           ) : undefined
         }

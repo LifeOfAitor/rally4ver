@@ -17,7 +17,10 @@ export default function App() {
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: colors.bg }}>
         {screen.name === 'home' ? (
-          <HomeScreen onNew={() => setScreen({ name: 'editor' })} onOpen={(stage) => setScreen({ name: 'editor', stage })} />
+          <HomeScreen
+            onNew={() => setScreen({ name: 'editor' })}
+            onOpen={(stage) => setScreen({ name: 'editor', stage })}
+          />
         ) : (
           <RouteEditor stage={screen.stage} onDone={() => setScreen({ name: 'home' })} />
         )}

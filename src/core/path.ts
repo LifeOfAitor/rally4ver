@@ -74,7 +74,8 @@ export function curvatures(path: Path, halfWindowM = 12): number[] {
     const a = Math.max(0, i - w);
     const b = Math.min(h.length - 1, i + w - 1);
     if (b <= a) continue;
-    const span = points[b].s + (points[b + 1].s - points[b].s) / 2 - (points[a].s + (points[a + 1].s - points[a].s) / 2);
+    const span =
+      points[b].s + (points[b + 1].s - points[b].s) / 2 - (points[a].s + (points[a + 1].s - points[a].s) / 2);
     k[i] = (h[b] - h[a]) / span;
   }
   return k;

@@ -8,9 +8,7 @@ export function offset(origin: LatLon, meters: number, bearing: number): LatLon 
   return p.toLatLon({ x: meters * Math.sin(toRad(bearing)), y: meters * Math.cos(toRad(bearing)) });
 }
 
-export type Segment =
-  | { straight: number }
-  | { turn: 'L' | 'R'; radius: number; angle: number };
+export type Segment = { straight: number } | { turn: 'L' | 'R'; radius: number; angle: number };
 
 /**
  * Builds a synthetic road as a LatLon polyline: straights and circular arcs,

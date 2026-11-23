@@ -91,7 +91,13 @@ describe('generatePacenotes', () => {
   });
 
   it('merges a same-direction bend drawn in two pieces', () => {
-    const notes = notesFor([{ straight: 100 }, { turn: 'R', radius: 70, angle: 40 }, { straight: 4 }, { turn: 'R', radius: 70, angle: 40 }, { straight: 100 }]);
+    const notes = notesFor([
+      { straight: 100 },
+      { turn: 'R', radius: 70, angle: 40 },
+      { straight: 4 },
+      { turn: 'R', radius: 70, angle: 40 },
+      { straight: 100 },
+    ]);
     expect(notes).toHaveLength(1);
   });
 
@@ -102,12 +108,22 @@ describe('generatePacenotes', () => {
   });
 
   it('detects a tightening and an opening bend', () => {
-    const closes = notesFor([{ straight: 100 }, { turn: 'L', radius: 120, angle: 30 }, { turn: 'L', radius: 42, angle: 60 }, { straight: 100 }]);
+    const closes = notesFor([
+      { straight: 100 },
+      { turn: 'L', radius: 120, angle: 30 },
+      { turn: 'L', radius: 42, angle: 60 },
+      { straight: 100 },
+    ]);
     expect(closes).toHaveLength(1);
     expect(closes[0].modifiers).toContain('cierra');
     expect(closes[0].grade).toBe(3);
 
-    const opens = notesFor([{ straight: 100 }, { turn: 'L', radius: 35, angle: 60 }, { turn: 'L', radius: 120, angle: 30 }, { straight: 100 }]);
+    const opens = notesFor([
+      { straight: 100 },
+      { turn: 'L', radius: 35, angle: 60 },
+      { turn: 'L', radius: 120, angle: 30 },
+      { straight: 100 },
+    ]);
     expect(opens[0].modifiers).toContain('abre');
   });
 

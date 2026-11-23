@@ -9,6 +9,11 @@ export interface RouteRequest {
   origin: Stop | null;
   destination: Stop;
   waypoints: Stop[];
+  /**
+   * Which of Google's alternative routes was selected (`!5i<n>` in the data
+   * blob, 0 = the default one). Only a hint: our router's alternatives differ.
+   */
+  preferredAlternative?: number;
 }
 
 /** First http(s) URL inside shared text ("Ruta a X https://maps.app.goo.gl/abc"). */
@@ -109,11 +114,14 @@ export function parseRouteLink(input: string): RouteRequest | null {
   while (stops.length && stops[stops.length - 1] === null) stops.pop();
   if (stops.length < 1) return null;
   const destination = stops[stops.length - 1]!;
-  if (stops.length === 1) return { source: 'google', origin: null, destination, waypoints: [] };
+  const alt = url.match(/!5i(\d+)/);
+  const extra = alt ? { preferredAlternative: Number(alt[1]) } : {};
+  if (stops.length === 1) return { source: 'google', origin: null, destination, waypoints: [], ...extra };
   return {
     source: 'google',
     origin: stops[0],
     destination,
     waypoints: stops.slice(1, -1).filter((s): s is Stop => s !== null),
+    ...extra,
   };
 }

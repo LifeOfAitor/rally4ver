@@ -4,13 +4,26 @@ import { buildRoad, MADRID, offset } from '../../test/helpers';
 
 describe('resample', () => {
   it('emits evenly spaced points with cumulative distance', () => {
-    const pts = resample([{ x: 0, y: 0 }, { x: 0, y: 12 }, { x: 8, y: 12 }], 5);
+    const pts = resample(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 12 },
+        { x: 8, y: 12 },
+      ],
+      5,
+    );
     expect(pts.map((p) => p.s)).toEqual([0, 5, 10, 15, 20]);
     expect(pts[3]).toMatchObject({ x: 3, y: 12 });
   });
 
   it('keeps a short final remainder', () => {
-    const pts = resample([{ x: 0, y: 0 }, { x: 0, y: 12 }], 5);
+    const pts = resample(
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 12 },
+      ],
+      5,
+    );
     expect(pts[pts.length - 1].s).toBeCloseTo(12);
   });
 });
@@ -37,7 +50,9 @@ describe('curvatures', () => {
   });
 
   it('is negative for left turns', () => {
-    const k = curvatures(buildPath(buildRoad([{ straight: 50 }, { turn: 'L', radius: 50, angle: 90 }, { straight: 50 }])));
+    const k = curvatures(
+      buildPath(buildRoad([{ straight: 50 }, { turn: 'L', radius: 50, angle: 90 }, { straight: 50 }])),
+    );
     expect(Math.min(...k)).toBeLessThan(-1 / 60);
     expect(Math.max(...k)).toBeLessThan(1e-4);
   });

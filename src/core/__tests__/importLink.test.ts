@@ -39,6 +39,20 @@ describe('parseRouteLink — Google', () => {
     expect(r.destination).toEqual({ kind: 'point', point: { latitude: 40.9429, longitude: -4.1184 } });
   });
 
+  it('reads the selected alternative route', () => {
+    const r = parseRouteLink(
+      'https://www.google.com/maps/dir/43.3664321,-1.8035258/43.3306032,-1.8987338/@43.3387479,-1.8922741,14105m/' +
+        'data=!3m1!1e3!4m8!4m7!1m1!4e1!1m0!2m1!1b1!3e0!5i1?entry=ttu&g_ep=EgoyMDI2MTExOC4xIKXMDSoASAFQAw%3D%3D',
+    )!;
+    expect(r).toEqual({
+      source: 'google',
+      origin: { kind: 'point', point: { latitude: 43.3664321, longitude: -1.8035258 } },
+      destination: { kind: 'point', point: { latitude: 43.3306032, longitude: -1.8987338 } },
+      waypoints: [],
+      preferredAlternative: 1,
+    });
+  });
+
   it('keeps place names when there are no embedded coordinates', () => {
     const r = parseRouteLink('https://www.google.es/maps/dir/Madrid/Toledo/')!;
     expect(r.origin).toEqual({ kind: 'place', query: 'Madrid' });

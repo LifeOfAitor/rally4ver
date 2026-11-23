@@ -61,6 +61,7 @@ route (LatLon[]) → buildPath (resample every 5 m, local XY)
 
 ## Product decisions
 
+- **The user picks the road** ("la ruta a la que darle caña"), not the router. Google links carry only stops (plus `!5i<n>` = chosen alternative), so: show OSRM alternatives (only with 2 stops) and preselect `!5i`; a map tap adds a via in the leg it belongs to (`core/stops.ts`); after reversing or moving stops keep the most similar route (`core/routeMatch.ts`). Reverse button swaps start/finish.
 - Always a fixed route (no free / predictive mode). Routes from: A→B on the map, Google Maps share link (origin/destination/waypoints re-routed on OSM, then drag to adjust), GPX import.
 - Recce mode (record a drive, notes from the real GPS trace) and stage timer with live delta vs best run (optional, off by default) come after the MVP.
 - Voice: pre-generated AI clips per token (Piper / ElevenLabs). Never ship copyrighted samples from games or videos.

@@ -1,6 +1,16 @@
 import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import type { LatLon } from '../core/geo';
 import { extractUrl } from '../core/importLink';
@@ -12,7 +22,7 @@ import { colors, radius } from './theme';
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onImported: (stops: LatLon[], source: StageSource) => void;
+  onImported: (stops: LatLon[], source: StageSource, preferredAlternative?: number) => void;
 }
 
 export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
@@ -40,7 +50,7 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
       const request = await requestFromSharedText(text);
       const here = request.origin ? null : await currentLocation();
       const stops = await resolveStops(request, here);
-      onImported(stops, request.source);
+      onImported(stops, request.source, request.preferredAlternative);
       setText('');
       onClose();
     } catch (e) {
@@ -72,16 +82,27 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
           />
           {error && <Text style={styles.error}>{error}</Text>}
           <View style={styles.row}>
-            <Pressable style={[styles.button, styles.secondary]} onPress={() => Clipboard.getStringAsync().then(setText)}>
+            <Pressable
+              style={[styles.button, styles.secondary]}
+              onPress={() => Clipboard.getStringAsync().then(setText)}
+            >
               <Text style={styles.buttonText}>Pegar</Text>
             </Pressable>
-            <Pressable style={[styles.button, styles.primary, (!text || busy) && styles.disabled]} disabled={!text || busy} onPress={submit}>
-              {busy ? <ActivityIndicator color="#000" /> : <Text style={[styles.buttonText, styles.primaryText]}>Importar</Text>}
+            <Pressable
+              style={[styles.button, styles.primary, (!text || busy) && styles.disabled]}
+              disabled={!text || busy}
+              onPress={submit}
+            >
+              {busy ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={[styles.buttonText, styles.primaryText]}>Importar</Text>
+              )}
             </Pressable>
           </View>
           <Text style={styles.note}>
-            Google no comparte el trazado exacto: recalculamos la ruta por las mismas paradas. Si algún tramo no coincide,
-            toca el mapa para añadir una parada y arrástrala.
+            Google no comparte el trazado exacto: recalculamos la ruta por las mismas paradas. Si algún tramo no
+            coincide, toca el mapa para añadir una parada y arrástrala.
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -91,7 +112,14 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: { backgroundColor: colors.surface, padding: 20, paddingBottom: 36, borderTopLeftRadius: radius, borderTopRightRadius: radius, gap: 12 },
+  sheet: {
+    backgroundColor: colors.surface,
+    padding: 20,
+    paddingBottom: 36,
+    borderTopLeftRadius: radius,
+    borderTopRightRadius: radius,
+    gap: 12,
+  },
   title: { color: colors.text, fontSize: 20, fontWeight: '900' },
   help: { color: colors.muted, fontSize: 14, lineHeight: 20 },
   input: {

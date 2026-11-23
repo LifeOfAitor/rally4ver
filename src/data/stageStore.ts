@@ -65,7 +65,8 @@ function db(): Promise<SQLite.SQLiteDatabase> {
 
 /** Compact [lat, lon] pairs at ~1 m precision. */
 const encode = (pts: LatLon[]) => JSON.stringify(pts.map((p) => [+p.latitude.toFixed(6), +p.longitude.toFixed(6)]));
-const decode = (json: string): LatLon[] => (JSON.parse(json) as [number, number][]).map(([latitude, longitude]) => ({ latitude, longitude }));
+const decode = (json: string): LatLon[] =>
+  (JSON.parse(json) as [number, number][]).map(([latitude, longitude]) => ({ latitude, longitude }));
 
 const fromRow = (r: StageRow): Stage => ({
   id: r.id,
@@ -79,7 +80,9 @@ const fromRow = (r: StageRow): Stage => ({
 
 export async function saveStage(stage: NewStage): Promise<Stage> {
   const createdAt = Date.now();
-  const res = await (await db()).runAsync(
+  const res = await (
+    await db()
+  ).runAsync(
     'INSERT INTO stages (name, source, created_at, stops, route, distance) VALUES (?, ?, ?, ?, ?, ?)',
     stage.name,
     stage.source,
@@ -92,7 +95,9 @@ export async function saveStage(stage: NewStage): Promise<Stage> {
 }
 
 export async function updateStage(id: number, stage: NewStage): Promise<void> {
-  await (await db()).runAsync(
+  await (
+    await db()
+  ).runAsync(
     'UPDATE stages SET name = ?, source = ?, stops = ?, route = ?, distance = ? WHERE id = ?',
     stage.name,
     stage.source,
@@ -117,7 +122,9 @@ export async function deleteStage(id: number): Promise<void> {
 }
 
 export async function saveRun(stageId: number, run: Run): Promise<void> {
-  await (await db()).runAsync(
+  await (
+    await db()
+  ).runAsync(
     'INSERT INTO runs (stage_id, finished_at, total, samples) VALUES (?, ?, ?, ?)',
     stageId,
     Date.now(),
@@ -127,7 +134,9 @@ export async function saveRun(stageId: number, run: Run): Promise<void> {
 }
 
 export async function listRuns(stageId: number): Promise<(Run & { finishedAt: number })[]> {
-  const rows = await (await db()).getAllAsync<{ finished_at: number; total: number | null; samples: string }>(
+  const rows = await (
+    await db()
+  ).getAllAsync<{ finished_at: number; total: number | null; samples: string }>(
     'SELECT finished_at, total, samples FROM runs WHERE stage_id = ? ORDER BY finished_at DESC',
     stageId,
   );

@@ -17,6 +17,8 @@ export interface Maneuver {
 }
 
 export interface RoutedRoute {
+  /** Main roads in order, e.g. "GI-3440 · GI-636". */
+  summary: string;
   coordinates: LatLon[];
   distance: number; // m
   duration: number; // s
@@ -30,16 +32,43 @@ interface OsrmResponse {
     distance: number;
     duration: number;
     geometry: { coordinates: [number, number][] };
-    legs: { steps: { name: string; maneuver: { location: [number, number]; type: string; modifier?: string } }[] }[];
+    legs: {
+      steps: {
+        name: string;
+        ref?: string;
+        distance?: number;
+        maneuver: { location: [number, number]; type: string; modifier?: string };
+      }[];
+    }[];
   }[];
 }
 
-/** Pure parser for an OSRM `route` response (geojson geometry, steps). */
-export function parseOsrm(json: OsrmResponse): RoutedRoute {
-  const route = json.routes?.[0];
-  if (json.code !== 'Ok' || !route) throw new Error(json.message ?? 'No se encontró ruta');
+type OsrmRoute = NonNullable<OsrmResponse['routes']>[number];
+
+/** Up to three road names/refs that make up most of the route, in driving order. */
+function summarize(route: OsrmRoute): string {
+  const byRoad = new globalThis.Map<string, number>();
+  for (const step of route.legs.flatMap((l) => l.steps)) {
+    const road = (step.ref ?? step.name ?? '').split(';')[0].trim();
+    if (road) byRoad.set(road, (byRoad.get(road) ?? 0) + (step.distance ?? 0));
+  }
+  const top = [...byRoad.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([road]) => road);
+  return [...byRoad.keys()].filter((road) => top.includes(road)).join(' · ');
+}
+
+/** Pure parser for an OSRM `route` response (geojson geometry, steps); main route first. */
+export function parseOsrm(json: OsrmResponse): RoutedRoute[] {
+  if (json.code !== 'Ok' || !json.routes?.length) throw new Error(json.message ?? 'No se encontró ruta');
+  return json.routes.map(parseRoute);
+}
+
+function parseRoute(route: OsrmRoute): RoutedRoute {
   const toLatLon = ([lon, lat]: [number, number]): LatLon => ({ latitude: lat, longitude: lon });
   return {
+    summary: summarize(route),
     coordinates: route.geometry.coordinates.map(toLatLon),
     distance: route.distance,
     duration: route.duration,
@@ -55,11 +84,17 @@ export function parseOsrm(json: OsrmResponse): RoutedRoute {
   };
 }
 
-/** Driving route through `stops` (≥ 2). */
-export async function fetchRoute(stops: LatLon[]): Promise<RoutedRoute> {
+/**
+ * Driving routes through `stops` (≥ 2). With only start and finish the router
+ * also returns up to two alternatives (OSRM can't do alternatives with vias).
+ */
+export async function fetchRoutes(stops: LatLon[]): Promise<RoutedRoute[]> {
   if (stops.length < 2) throw new Error('Hacen falta al menos salida y llegada');
   const coords = stops.map((p) => `${p.longitude.toFixed(6)},${p.latitude.toFixed(6)}`).join(';');
-  const res = await fetch(`${OSRM_URL}${coords}?overview=full&geometries=geojson&steps=true`, { headers: HEADERS });
+  const alternatives = stops.length === 2 ? '&alternatives=3' : '';
+  const res = await fetch(`${OSRM_URL}${coords}?overview=full&geometries=geojson&steps=true${alternatives}`, {
+    headers: HEADERS,
+  });
   if (!res.ok && res.status !== 400) throw new Error(`Error del servidor de rutas (${res.status})`);
   return parseOsrm((await res.json()) as OsrmResponse);
 }
