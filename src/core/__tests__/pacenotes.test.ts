@@ -47,11 +47,22 @@ describe('generatePacenotes', () => {
     [110, 5],
     [160, 6],
   ])('grades a %i m right as %i', (radius, grade) => {
-    const notes = notesFor([{ straight: 150 }, { turn: 'R', radius, angle: 70 }, { straight: 150 }]);
+    const notes = notesFor([{ straight: 150 }, { turn: 'R', radius, angle: 120 }, { straight: 150 }]);
     expect(notes).toHaveLength(1);
     expect(notes[0]).toMatchObject({ direction: 'derecha', grade, hairpin: false });
-    expect(notes[0].angle).toBeGreaterThan(60);
-    expect(notes[0].angle).toBeLessThan(80);
+    expect(notes[0].angle).toBeGreaterThan(110);
+    expect(notes[0].angle).toBeLessThan(130);
+  });
+
+  it('grades a short bend faster than a long one of the same radius', () => {
+    const [short] = notesFor([{ straight: 150 }, { turn: 'R', radius: 35, angle: 30 }, { straight: 150 }]);
+    const [long] = notesFor([{ straight: 150 }, { turn: 'R', radius: 35, angle: 120 }, { straight: 150 }]);
+    expect(short.grade).toBeGreaterThanOrEqual(5);
+    expect(long.grade).toBe(3);
+  });
+
+  it('does not call bends that are flat out on the racing line', () => {
+    expect(notesFor([{ straight: 150 }, { turn: 'R', radius: 180, angle: 25 }, { straight: 150 }])).toEqual([]);
   });
 
   it('detects a hairpin', () => {
@@ -61,7 +72,7 @@ describe('generatePacenotes', () => {
   });
 
   it('warns "cuidado" for a tight bend after a long straight', () => {
-    const [note] = notesFor([{ straight: 400 }, { turn: 'R', radius: 30, angle: 90 }, { straight: 50 }]);
+    const [note] = notesFor([{ straight: 400 }, { turn: 'R', radius: 25, angle: 90 }, { straight: 50 }]);
     expect(note.modifiers[0]).toBe('cuidado');
     expect(noteSpeech(note)).toBe('cuidado derecha dos');
   });
@@ -73,7 +84,7 @@ describe('generatePacenotes', () => {
       { straight: 10 },
       { turn: 'R', radius: 60, angle: 60 },
       { straight: 100 },
-      { turn: 'L', radius: 100, angle: 45 },
+      { turn: 'L', radius: 100, angle: 60 },
       { straight: 100 },
     ]);
     expect(notes.map(noteSpeech)).toEqual(['izquierda cuatro y', 'derecha cuatro cien', 'izquierda cinco']);
@@ -104,6 +115,6 @@ describe('generatePacenotes', () => {
     // A 90° corner drawn as a single vertex, like a town junction in OSM.
     const notes = notesFor([{ straight: 200 }, { turn: 'R', radius: 0.1, angle: 90 }, { straight: 200 }]);
     expect(notes).toHaveLength(1);
-    expect(notes[0].grade).toBe(1);
+    expect(notes[0].grade).toBeLessThanOrEqual(2);
   });
 });

@@ -11,7 +11,10 @@
       "bundleIdentifier": "com.aitorgaillard.rally4ver",
       "supportsTablet": false,
       "infoPlist": {
-        "UIBackgroundModes": ["location", "audio"],
+        "UIBackgroundModes": [
+          "location",
+          "audio"
+        ],
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -45,7 +48,8 @@
       "expo-task-manager",
       "expo-build-properties",
       "@maplibre/maplibre-react-native",
-      "expo-font"
+      "expo-font",
+      "expo-status-bar"
     ]
   }
 }

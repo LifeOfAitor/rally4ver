@@ -18,6 +18,8 @@ export interface Pacenote {
   /** Total heading change (degrees, always positive). */
   angle: number;
   minRadius: number;
+  /** Radius of the racing line within the lane, used for the grade. */
+  lineRadius: number;
   /** What links this note to the next one: "y" (straight into it) or a rounded distance. */
   link: { kind: 'y' } | { kind: 'distance'; meters: number } | null;
 }
@@ -32,6 +34,13 @@ export interface PacenoteConfig {
   /** Gaps shorter than this are called "y" (into) instead of a distance. */
   linkGapM: number;
   halfWindowM: number;
+  /**
+   * Usable width to straighten the line inside your own lane (m). Short bends
+   * can be driven much straighter than the road, so they get a faster grade.
+   */
+  laneWidthM: number;
+  /** Bends whose line radius is wider than this are flat out and not called. */
+  maxLineRadiusM: number;
 }
 
 export const DEFAULT_CONFIG: PacenoteConfig = {
@@ -40,7 +49,15 @@ export const DEFAULT_CONFIG: PacenoteConfig = {
   mergeGapM: 10,
   linkGapM: 25,
   halfWindowM: 12,
+  laneWidthM: 2.5,
+  maxLineRadiusM: 250,
 };
+
+/** Classic racing-line radius: R' = R + w / (1 − cos(θ/2)). */
+export function lineRadiusFor(radius: number, angleDeg: number, laneWidthM: number): number {
+  const half = Math.min(angleDeg, 180) * (Math.PI / 360);
+  return radius + laneWidthM / Math.max(1e-6, 1 - Math.cos(half));
+}
 
 interface Bend {
   from: number; // point index, inclusive
@@ -76,13 +93,15 @@ export function generatePacenotes(path: Path, config: PacenoteConfig = DEFAULT_C
     const angleDeg = Math.abs(toDeg(angle));
     if (angleDeg < config.minAngleDeg) continue;
     const minRadius = 1 / maxK;
+    const lineRadius = lineRadiusFor(minRadius, angleDeg, config.laneWidthM);
+    if (lineRadius > config.maxLineRadiusM) continue;
     const start = points[bend.from].s;
     const end = points[bend.to].s;
-    const grade = gradeFor(minRadius, config);
+    const grade = gradeFor(lineRadius, config);
     const hairpin = angleDeg >= 140 && minRadius < 25;
     const modifiers: Modifier[] = [];
     if (!hairpin && end - start >= 100 && angleDeg >= 60) modifiers.push('larga');
-    const shape = tightening(k, bend);
+    const shape = hairpin ? null : tightening(k, bend);
     if (shape) modifiers.push(shape);
     notes.push({
       id: notes.length,
@@ -94,6 +113,7 @@ export function generatePacenotes(path: Path, config: PacenoteConfig = DEFAULT_C
       modifiers,
       angle: angleDeg,
       minRadius,
+      lineRadius,
       link: null,
     });
   }

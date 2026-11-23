@@ -41,8 +41,8 @@ describe('matcher', () => {
 describe('caller', () => {
   it('produces the expected notes for the test road', () => {
     expect(notes.map((n) => [n.direction, n.grade, n.link])).toEqual([
-      ['derecha', 3, { kind: 'y' }],
-      ['izquierda', 2, { kind: 'distance', meters: 400 }],
+      ['derecha', 4, { kind: 'y' }],
+      ['izquierda', 3, { kind: 'distance', meters: 400 }],
       ['izquierda', 5, null],
     ]);
   });
