@@ -1,6 +1,6 @@
 import type { LocationObject } from 'expo-location';
 
-import { callNotes, say, silence } from '../audio/voice';
+import { callNotes, sayFinish, sayPhrase, silence } from '../audio/voice';
 import { generatePacenotes } from '../core/pacenotes';
 import { buildPath } from '../core/path';
 import { createSession, type SessionState } from '../core/session';
@@ -76,13 +76,13 @@ export function handleLocations(locations: LocationObject[]) {
           callNotes(e.notes, voiceRate);
           break;
         case 'offroute':
-          say('Fuera de ruta', voiceRate);
+          sayPhrase('fuera de ruta', voiceRate);
           break;
         case 'timeVoided':
-          say('Tiempo anulado', voiceRate);
+          sayPhrase('tiempo anulado', voiceRate);
           break;
         case 'backOnRoute':
-          say('De vuelta en ruta', voiceRate);
+          sayPhrase('de vuelta en ruta', voiceRate);
           break;
         case 'finish':
           void onFinish(e.run, voiceEnabled, voiceRate);
@@ -96,13 +96,7 @@ export function handleLocations(locations: LocationObject[]) {
 async function onFinish(run: Parameters<typeof saveRun>[1] | null, voice: boolean, rate: number) {
   const { stage, bestTime } = driveStore.get();
   const record = !!run?.total && (bestTime === null || run.total < bestTime);
-  if (voice) say(run?.total ? `Meta. ${spokenTime(run.total)}${record ? '. Mejor tiempo' : ''}` : 'Meta', rate);
+  if (voice) sayFinish(record, rate);
   if (stage && run) await saveRun(stage.id, run).catch(() => {});
   driveStore.set({ newRecord: record, bestTime: record && run?.total ? run.total : bestTime });
-}
-
-function spokenTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return m > 0 ? `${m} minutos ${s} segundos` : `${s} segundos`;
 }

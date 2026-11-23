@@ -48,3 +48,6 @@ build/
 *.ipa
 *.dSYM.zip
 *.dSYM
+
+# voice samples to choose from (not part of the app)
+muestras-voz/

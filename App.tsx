@@ -3,42 +3,64 @@ import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { settingsStore, updateSettings } from './src/data/settings';
 import type { Stage } from './src/data/stageStore';
 import { DriveScreen } from './src/ui/DriveScreen';
 import { HomeScreen } from './src/ui/HomeScreen';
 import { RouteEditor } from './src/ui/RouteEditor';
+import { SettingsScreen } from './src/ui/SettingsSheet';
+import { type Tab, TabBar } from './src/ui/TabBar';
 import { colors } from './src/ui/theme';
+import { TimesScreen } from './src/ui/TimesScreen';
+import { WelcomeScreen } from './src/ui/WelcomeScreen';
 
-type Screen = { name: 'home' } | { name: 'editor'; stage?: Stage } | { name: 'drive'; stage: Stage };
+type Overlay = { name: 'editor'; stage?: Stage } | { name: 'drive'; stage: Stage } | null;
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
-  const home = () => setScreen({ name: 'home' });
+  const welcomed = settingsStore.use((s) => s.welcomed);
+  const [tab, setTab] = useState<Tab>('tramos');
+  const [overlay, setOverlay] = useState<Overlay>(null);
+
+  let content;
+  if (!welcomed) {
+    content = <WelcomeScreen onDone={() => updateSettings({ welcomed: true })} />;
+  } else if (overlay?.name === 'editor') {
+    content = (
+      <RouteEditor
+        stage={overlay.stage}
+        onDone={(saved) => setOverlay(saved ? { name: 'drive', stage: saved } : null)}
+      />
+    );
+  } else if (overlay?.name === 'drive') {
+    content = (
+      <DriveScreen
+        stage={overlay.stage}
+        onEdit={() => setOverlay({ name: 'editor', stage: overlay.stage })}
+        onClose={() => setOverlay(null)}
+      />
+    );
+  } else {
+    content = (
+      <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          {tab === 'tramos' && (
+            <HomeScreen
+              onNew={() => setOverlay({ name: 'editor' })}
+              onOpen={(stage) => setOverlay({ name: 'drive', stage })}
+            />
+          )}
+          {tab === 'tiempos' && <TimesScreen />}
+          {tab === 'ajustes' && <SettingsScreen />}
+        </View>
+        <TabBar tab={tab} onChange={setTab} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: colors.bg }}>
-        {screen.name === 'home' && (
-          <HomeScreen
-            onNew={() => setScreen({ name: 'editor' })}
-            onOpen={(stage) => setScreen({ name: 'drive', stage })}
-          />
-        )}
-        {screen.name === 'editor' && (
-          <RouteEditor
-            stage={screen.stage}
-            onDone={(saved) => setScreen(saved ? { name: 'drive', stage: saved } : { name: 'home' })}
-          />
-        )}
-        {screen.name === 'drive' && (
-          <DriveScreen
-            stage={screen.stage}
-            onEdit={() => setScreen({ name: 'editor', stage: screen.stage })}
-            onClose={home}
-          />
-        )}
-      </View>
-      <StatusBar style="light" />
+      <View style={{ flex: 1, backgroundColor: colors.card }}>{content}</View>
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }

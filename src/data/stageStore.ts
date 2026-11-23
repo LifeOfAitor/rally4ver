@@ -146,3 +146,19 @@ export async function listRuns(stageId: number): Promise<(Run & { finishedAt: nu
     samples: (JSON.parse(r.samples) as [number, number][]).map(([s, t]) => ({ s, t })),
   }));
 }
+
+export interface RunSummary {
+  stageId: number;
+  total: number;
+  finishedAt: number;
+}
+
+/** Every finished (timed) run, newest first — for stats and history. */
+export async function listAllRuns(): Promise<RunSummary[]> {
+  const rows = await (
+    await db()
+  ).getAllAsync<{ stage_id: number; total: number; finished_at: number }>(
+    'SELECT stage_id, total, finished_at FROM runs WHERE total IS NOT NULL ORDER BY finished_at DESC',
+  );
+  return rows.map((r) => ({ stageId: r.stage_id, total: r.total, finishedAt: r.finished_at }));
+}

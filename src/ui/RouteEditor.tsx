@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,6 +19,7 @@ import { currentLocation } from '../data/location';
 import { saveStage, type Stage, type StageSource, updateStage } from '../data/stageStore';
 import { ImportLinkSheet } from './ImportLinkSheet';
 import { StageMap } from './StageMap';
+import { Header, PrimaryButton, RoundButton } from './kit';
 import { colors, radius } from './theme';
 import { insertStop, reverseStops } from '../core/stops';
 import { useRouteDraft } from './useRouteDraft';
@@ -111,30 +111,27 @@ export function RouteEditor({ stage, onDone }: Props) {
         onLongPressStop={removeStop}
       />
 
-      <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <Pressable style={styles.iconButton} onPress={() => onDone()} accessibilityLabel="Volver">
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </Pressable>
-        <Text style={styles.title}>{stage ? 'Editar tramo' : 'Nuevo tramo'}</Text>
-        {stops.length >= 2 && (
-          <Pressable
-            style={styles.iconButton}
-            onPress={() => setStops(reverseStops(stops))}
-            accessibilityLabel="Invertir salida y llegada"
-          >
-            <Ionicons name="swap-vertical" size={22} color={colors.text} />
-          </Pressable>
-        )}
-        <Pressable style={styles.iconButton} onPress={useMyLocation} accessibilityLabel="Salir desde mi ubicación">
-          <Ionicons name="locate" size={22} color={colors.text} />
-        </Pressable>
-        <Pressable style={styles.iconButton} onPress={() => setImporting(true)} accessibilityLabel="Importar enlace">
-          <Ionicons name="link" size={22} color={colors.note} />
-        </Pressable>
-      </View>
-
-      <View style={[styles.hint, { top: insets.top + 64 }]} pointerEvents="none">
-        <Text style={styles.hintText}>{hint}</Text>
+      <View style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+        <Header
+          title={stage ? 'Editar tramo' : 'Nuevo tramo'}
+          left={<RoundButton icon="chevron-back" label="Volver" onPress={() => onDone()} />}
+          right={
+            <RoundButton icon="link" label="Importar enlace de Google Maps o Waze" onPress={() => setImporting(true)} />
+          }
+        />
+        <View style={styles.hintWrap} pointerEvents="none">
+          <Text style={styles.hintText}>{hint}</Text>
+        </View>
+        <View style={styles.tools} pointerEvents="box-none">
+          <RoundButton icon="locate" label="Salir desde mi ubicación" onPress={useMyLocation} />
+          {stops.length >= 2 && (
+            <RoundButton
+              icon="swap-vertical"
+              label="Invertir salida y llegada"
+              onPress={() => setStops(reverseStops(stops))}
+            />
+          )}
+        </View>
       </View>
 
       <KeyboardAvoidingView
@@ -142,42 +139,41 @@ export function RouteEditor({ stage, onDone }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         pointerEvents="box-none"
       >
-        <View style={styles.sheetSpacer} pointerEvents="none" />
+        <View style={{ flex: 1 }} pointerEvents="none" />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 16, minHeight: SHEET_HEIGHT }]}>
           <View style={styles.statsRow}>
-            <Stat label="Distancia" value={route ? formatKm(route.distance) : '—'} />
-            <Stat label="Notas" value={route ? String(notes.length) : '—'} />
+            <Stat label="distancia" value={route ? formatKm(route.distance) : '—'} />
+            <Stat label="notas" value={route ? String(notes.length) : '—'} />
             <Stat
-              label="Muy cerradas"
+              label="muy cerradas"
               value={route ? String(notes.filter((n) => n.hairpin || n.grade <= 2).length) : '—'}
             />
-            {loading && <ActivityIndicator color={colors.note} />}
+            {loading && <ActivityIndicator color={colors.ink} />}
           </View>
           {error && <Text style={styles.error}>{error}</Text>}
           {routes.length > 1 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.notes}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               {routes.map((r, i) => (
-                <Pressable
-                  key={i}
-                  style={[styles.altChip, i === selected && styles.altChipSelected]}
-                  onPress={() => select(i)}
-                >
-                  <Text style={[styles.altTitle, i === selected && styles.altTitleSelected]}>
+                <Pressable key={i} style={[styles.alt, i === selected && styles.altOn]} onPress={() => select(i)}>
+                  <Text style={[styles.altTitle, i === selected && styles.altTextOn]}>
                     {formatKm(r.distance)} · {Math.round(r.duration / 60)} min
                   </Text>
-                  <Text style={[styles.altSummary, i === selected && styles.altTitleSelected]} numberOfLines={1}>
+                  <Text style={[styles.altSummary, i === selected && styles.altTextOn]} numberOfLines={1}>
                     {r.summary || `Ruta ${i + 1}`}
                   </Text>
                 </Pressable>
               ))}
             </ScrollView>
           )}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.notes}>
-            {notes.slice(0, 60).map((n) => (
-              <View key={n.id} style={[styles.chip, (n.hairpin || n.grade <= 2) && styles.chipTight]}>
-                <Text style={styles.chipText}>{noteLabel(n)}</Text>
-              </View>
-            ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {notes.slice(0, 60).map((n) => {
+              const tight = n.hairpin || n.grade <= 2;
+              return (
+                <View key={n.id} style={[styles.chip, tight && styles.chipTight]}>
+                  <Text style={[styles.chipText, tight && styles.chipTextTight]}>{noteLabel(n)}</Text>
+                </View>
+              );
+            })}
           </ScrollView>
           <View style={styles.saveRow}>
             <TextInput
@@ -187,13 +183,7 @@ export function RouteEditor({ stage, onDone }: Props) {
               placeholder="Nombre del tramo"
               placeholderTextColor={colors.muted}
             />
-            <Pressable
-              style={[styles.saveButton, (!route || saving) && styles.disabled]}
-              disabled={!route || saving}
-              onPress={save}
-            >
-              <Text style={styles.saveText}>Guardar</Text>
-            </Pressable>
+            <PrimaryButton title="Guardar" onPress={save} disabled={!route || saving} style={styles.saveButton} />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -212,7 +202,7 @@ export function RouteEditor({ stage, onDone }: Props) {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.stat}>
+    <View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -220,105 +210,78 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
-  topBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  title: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    textShadowColor: '#000',
-    textShadowRadius: 4,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: colors.border,
-    borderWidth: 1,
-  },
-  hint: { position: 'absolute', left: 16, right: 16, alignItems: 'center' },
+  root: { flex: 1, backgroundColor: colors.page },
+  top: { position: 'absolute', left: 0, right: 0, gap: 10 },
+  hintWrap: { alignItems: 'center', paddingHorizontal: 20 },
   hintText: {
-    color: colors.text,
-    backgroundColor: 'rgba(11,11,13,0.85)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    color: colors.ink,
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     fontSize: 13,
+    fontWeight: '600',
     overflow: 'hidden',
     textAlign: 'center',
   },
-  sheetSpacer: { flex: 1 },
+  tools: { alignItems: 'flex-end', paddingHorizontal: 20, gap: 10 },
   sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius,
-    borderTopRightRadius: radius,
-    paddingTop: 16,
-    gap: 12,
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 18,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    gap: 20,
-  },
-  stat: {},
-  statValue: { color: colors.text, fontSize: 22, fontWeight: '900' },
-  statLabel: { color: colors.muted, fontSize: 12 },
-  error: { color: colors.danger, paddingHorizontal: 16 },
-  notes: { paddingHorizontal: 16, gap: 8, alignItems: 'flex-start' },
-  altChip: {
-    maxWidth: 220,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  statsRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, gap: 26 },
+  statValue: { color: colors.ink, fontSize: 22, fontWeight: '800' },
+  statLabel: { color: colors.muted, fontSize: 12, fontWeight: '600' },
+  error: { color: colors.danger, paddingHorizontal: 20 },
+  chips: { paddingHorizontal: 20, gap: 8, alignItems: 'flex-start' },
+  alt: {
+    maxWidth: 230,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.bg,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
+    backgroundColor: colors.card,
   },
-  altChipSelected: { borderColor: colors.accent, backgroundColor: colors.surfaceHigh },
-  altTitle: { color: colors.muted, fontWeight: '900', fontSize: 15 },
-  altTitleSelected: { color: colors.text },
+  altOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
+  altTitle: { color: colors.ink, fontWeight: '800', fontSize: 15 },
   altSummary: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  altTextOn: { color: colors.onInk },
   chip: {
-    backgroundColor: colors.note,
-    borderRadius: 6,
-    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
     paddingVertical: 6,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
   },
-  chipTight: { backgroundColor: colors.accent },
-  chipText: { color: '#000', fontWeight: '900', fontSize: 13 },
-  saveRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
+  chipTight: { backgroundColor: colors.danger, borderStyle: 'solid', borderColor: colors.danger },
+  chipText: { color: colors.ink, fontWeight: '800', fontSize: 13 },
+  chipTextTight: { color: colors.onInk },
+  saveRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20 },
   nameInput: {
     flex: 1,
-    height: 48,
-    color: colors.text,
-    backgroundColor: colors.bg,
-    borderRadius: 10,
-    borderColor: colors.border,
-    borderWidth: 1,
-    paddingHorizontal: 12,
+    height: 54,
+    color: colors.ink,
+    backgroundColor: colors.card,
+    borderRadius: radius.button,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
+    paddingHorizontal: 16,
     fontSize: 16,
   },
-  saveButton: {
-    height: 48,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    backgroundColor: colors.note,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveText: { color: '#000', fontWeight: '900', fontSize: 16 },
-  disabled: { opacity: 0.4 },
+  saveButton: { height: 54, paddingHorizontal: 22 },
 });

@@ -7,7 +7,7 @@ import {
   NativeUserLocation,
   ViewAnnotation,
 } from '@maplibre/maplibre-react-native';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { LatLon } from '../core/geo';
@@ -28,6 +28,18 @@ interface Props {
   onLongPressStop?: (index: number) => void;
   /** Extra bottom padding when fitting the route (space taken by a sheet). */
   bottomInset?: number;
+}
+
+function boundsOf(route: LatLon[]): [number, number, number, number] | null {
+  if (route.length < 2) return null;
+  let [w, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const p of route) {
+    w = Math.min(w, p.longitude);
+    e = Math.max(e, p.longitude);
+    s = Math.min(s, p.latitude);
+    n = Math.max(n, p.latitude);
+  }
+  return [w, s, e, n];
 }
 
 const toLatLon = ([longitude, latitude]: [number, number]): LatLon => ({ latitude, longitude });
@@ -97,20 +109,17 @@ export function StageMap({
     };
   }, [notes, path]);
 
-  // Fit the whole route whenever a new one arrives.
+  const padding = { top: 80, right: 40, bottom: 40 + bottomInset, left: 40 };
+  // Frame the route from the first render (the camera may not be ready for fitBounds yet)…
+  const [initialView] = useState(() => {
+    const b = route ? boundsOf(route) : null;
+    return b ? { bounds: b, padding } : { center: [-3.7038, 40.4168] as [number, number], zoom: 6 };
+  });
+  // …and re-fit whenever a new route arrives.
   useEffect(() => {
-    if (!route || route.length < 2) return;
-    let [w, s, e, n] = [Infinity, Infinity, -Infinity, -Infinity];
-    for (const p of route) {
-      w = Math.min(w, p.longitude);
-      e = Math.max(e, p.longitude);
-      s = Math.min(s, p.latitude);
-      n = Math.max(n, p.latitude);
-    }
-    camera.current?.fitBounds([w, s, e, n], {
-      padding: { top: 80, right: 40, bottom: 40 + bottomInset, left: 40 },
-      duration: 600,
-    });
+    const b = route ? boundsOf(route) : null;
+    if (b) camera.current?.fitBounds(b, { padding, duration: 600 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route, bottomInset]);
 
   return (
@@ -122,7 +131,7 @@ export function StageMap({
       touchPitch={false}
       onPress={(e) => onPress?.(toLatLon(e.nativeEvent.lngLat))}
     >
-      <Camera ref={camera} initialViewState={{ center: [-3.7038, 40.4168], zoom: 6 }} />
+      <Camera ref={camera} initialViewState={initialView} />
       <NativeUserLocation />
       <GeoJSONSource
         id="alternatives"
@@ -140,13 +149,13 @@ export function StageMap({
           id="alt-casing"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#000000', 'line-width': 8 }}
+          paint={{ 'line-color': '#FFFFFF', 'line-width': 8 }}
         />
         <Layer
           id="alt-line"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#7A7A85', 'line-width': 5 }}
+          paint={{ 'line-color': '#A0A0A0', 'line-width': 5 }}
         />
       </GeoJSONSource>
       <GeoJSONSource id="route" data={line}>
@@ -154,13 +163,13 @@ export function StageMap({
           id="route-casing"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#000000', 'line-width': 8 }}
+          paint={{ 'line-color': '#FFFFFF', 'line-width': 9 }}
         />
         <Layer
           id="route-line"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': colors.accent, 'line-width': 5 }}
+          paint={{ 'line-color': colors.ink, 'line-width': 5 }}
         />
       </GeoJSONSource>
       <GeoJSONSource id="notes" data={notePoints}>
@@ -170,8 +179,8 @@ export function StageMap({
           minzoom={12}
           paint={{
             'circle-radius': 11,
-            'circle-color': ['case', ['==', ['get', 'tight'], 1], colors.accent, colors.note],
-            'circle-stroke-color': '#000000',
+            'circle-color': ['case', ['==', ['get', 'tight'], 1], colors.danger, colors.card],
+            'circle-stroke-color': colors.ink,
             'circle-stroke-width': 1.5,
           }}
         />
@@ -199,7 +208,9 @@ export function StageMap({
           onPress={() => onLongPressStop?.(i)}
         >
           <View style={[styles.stop, i === 0 && styles.stopStart, i === stops.length - 1 && i > 0 && styles.stopEnd]}>
-            <Text style={styles.stopText}>{stopLabel(i, stops.length)}</Text>
+            <Text style={[styles.stopText, (i === 0 || (i === stops.length - 1 && i > 0)) && styles.stopTextInk]}>
+              {stopLabel(i, stops.length)}
+            </Text>
           </View>
         </ViewAnnotation>
       ))}
@@ -209,16 +220,17 @@ export function StageMap({
 
 const styles = StyleSheet.create({
   stop: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.surfaceHigh,
-    borderColor: colors.text,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderColor: colors.ink,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stopStart: { backgroundColor: '#1E8E3E' },
-  stopEnd: { backgroundColor: colors.accent },
-  stopText: { color: colors.text, fontWeight: '900', fontSize: 13 },
+  stopStart: { backgroundColor: colors.ink },
+  stopEnd: { backgroundColor: colors.ink },
+  stopText: { color: colors.ink, fontWeight: '900', fontSize: 13 },
+  stopTextInk: { color: colors.onInk },
 });

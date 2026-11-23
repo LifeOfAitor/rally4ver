@@ -17,6 +17,7 @@ import { extractUrl } from '../core/importLink';
 import { currentLocation } from '../data/location';
 import { requestFromSharedText, resolveStops } from '../data/routing';
 import type { StageSource } from '../data/stageStore';
+import { Header, PrimaryButton, SecondaryButton } from './kit';
 import { colors, radius } from './theme';
 
 interface Props {
@@ -65,7 +66,7 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
       <KeyboardAvoidingView style={styles.backdrop} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={styles.sheet}>
-          <Text style={styles.title}>Importar ruta</Text>
+          <Header title="Importar ruta" />
           <Text style={styles.help}>
             En Google Maps calcula la ruta, pulsa «Compartir» y copia el enlace. También vale un enlace de Waze (solo
             trae el destino; la salida será tu ubicación).
@@ -82,27 +83,23 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
           />
           {error && <Text style={styles.error}>{error}</Text>}
           <View style={styles.row}>
-            <Pressable
-              style={[styles.button, styles.secondary]}
+            <SecondaryButton
+              title="Pegar"
+              icon="clipboard-outline"
+              style={{ flex: 1 }}
               onPress={() => Clipboard.getStringAsync().then(setText)}
-            >
-              <Text style={styles.buttonText}>Pegar</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, styles.primary, (!text || busy) && styles.disabled]}
-              disabled={!text || busy}
-              onPress={submit}
-            >
-              {busy ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={[styles.buttonText, styles.primaryText]}>Importar</Text>
-              )}
-            </Pressable>
+            />
+            {busy ? (
+              <View style={[styles.busy]}>
+                <ActivityIndicator color={colors.onInk} />
+              </View>
+            ) : (
+              <PrimaryButton title="Importar" onPress={submit} disabled={!text} style={{ flex: 1, height: 52 }} />
+            )}
           </View>
           <Text style={styles.note}>
-            Google no comparte el trazado exacto: recalculamos la ruta por las mismas paradas. Si algún tramo no
-            coincide, toca el mapa para añadir una parada y arrástrala.
+            Google no comparte el trazado exacto: recalculamos la ruta por las mismas paradas y te enseñamos las
+            alternativas. Si ninguna es la tuya, toca la carretera por la que quieres pasar.
           </Text>
         </View>
       </KeyboardAvoidingView>
@@ -111,35 +108,38 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
-    backgroundColor: colors.surface,
-    padding: 20,
+    backgroundColor: colors.card,
+    paddingTop: 20,
+    paddingHorizontal: 20,
     paddingBottom: 36,
-    borderTopLeftRadius: radius,
-    borderTopRightRadius: radius,
-    gap: 12,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    gap: 14,
   },
-  title: { color: colors.text, fontSize: 20, fontWeight: '900' },
-  help: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  help: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
   input: {
-    minHeight: 70,
-    color: colors.text,
-    backgroundColor: colors.bg,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
+    minHeight: 76,
+    color: colors.ink,
+    backgroundColor: colors.card,
+    borderRadius: radius.button,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
+    padding: 14,
     fontSize: 14,
     textAlignVertical: 'top',
   },
   error: { color: colors.danger, fontSize: 14 },
   row: { flexDirection: 'row', gap: 12 },
-  button: { flex: 1, height: 48, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  secondary: { backgroundColor: colors.surfaceHigh },
-  primary: { backgroundColor: colors.note },
-  disabled: { opacity: 0.4 },
-  buttonText: { color: colors.text, fontWeight: '800', fontSize: 16 },
-  primaryText: { color: '#000' },
+  busy: {
+    flex: 1,
+    height: 52,
+    borderRadius: radius.button,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   note: { color: colors.muted, fontSize: 12, lineHeight: 17 },
 });

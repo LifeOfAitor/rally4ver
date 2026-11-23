@@ -10,6 +10,8 @@ export interface Settings {
   voiceRate: number;
   /** Live time difference vs your best run while driving. Off by default. */
   liveDelta: boolean;
+  /** The welcome screen was already shown. */
+  welcomed: boolean;
 }
 
 export const LEAD_OPTIONS = [4, 6, 8];
@@ -18,8 +20,9 @@ export const RATE_OPTIONS = [1, 1.15, 1.3];
 const DEFAULTS: Settings = {
   voiceEnabled: true,
   leadSeconds: 6,
-  voiceRate: 1.15,
+  voiceRate: 1,
   liveDelta: false,
+  welcomed: false,
 };
 
 const KEY = 'settings';

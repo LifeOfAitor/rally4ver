@@ -1,19 +1,23 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useKeepAwake } from 'expo-keep-awake';
-import { useEffect, useState } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatKm, formatTime } from '../core/format';
-import type { Pacenote } from '../core/pacenotes';
+import { generatePacenotes, type Pacenote } from '../core/pacenotes';
+import { buildPath } from '../core/path';
 import { noteLabel } from '../core/phrase';
 import { formatDelta } from '../core/timer';
 import { settingsStore, updateSettings } from '../data/settings';
 import type { Stage } from '../data/stageStore';
 import { driveStore, loadStage, unloadStage } from '../engine/drive';
 import { startTracking, stopTracking } from '../engine/tracking';
+import { DottedCard, Header, PrimaryButton, RoundButton, SecondaryButton } from './kit';
 import { SettingsSheet } from './SettingsSheet';
-import { colors, radius } from './theme';
+import { StageMap } from './StageMap';
+import { colors, night, radius } from './theme';
 
 /** Same as the session's default start radius. */
 const START_RADIUS_M = 80;
@@ -57,43 +61,45 @@ export function DriveScreen({ stage, onEdit, onClose }: Props) {
     await loadStage(stage);
   }
 
+  const voiceButton = (inverted: boolean) => (
+    <RoundButton
+      icon={voiceEnabled ? 'volume-high-outline' : 'volume-mute-outline'}
+      label={voiceEnabled ? 'Silenciar' : 'Activar voz'}
+      onPress={() => updateSettings({ voiceEnabled: !voiceEnabled })}
+      inverted={inverted}
+    />
+  );
+
+  if (driving && session) {
+    return (
+      <View style={[styles.night, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
+        <StatusBar style="light" />
+        <Header
+          title={stage.name}
+          inverted
+          left={<RoundButton icon="close" label="Parar" onPress={stop} inverted />}
+          right={voiceButton(true)}
+        />
+        <Driving session={session} stageLength={stageLength} bestTime={bestTime} newRecord={newRecord} onDone={stop} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.root, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 16 }]}>
-      <View style={styles.topBar}>
-        <Pressable
-          style={styles.iconButton}
-          onPress={driving ? stop : onClose}
-          accessibilityLabel={driving ? 'Parar' : 'Volver'}
-        >
-          <Ionicons name={driving ? 'close' : 'chevron-back'} size={24} color={colors.text} />
-        </Pressable>
-        <Text style={styles.title} numberOfLines={1}>
-          {stage.name}
-        </Text>
-        <Pressable
-          style={styles.iconButton}
-          onPress={() => updateSettings({ voiceEnabled: !voiceEnabled })}
-          accessibilityLabel={voiceEnabled ? 'Silenciar' : 'Activar voz'}
-        >
-          <Ionicons name={voiceEnabled ? 'volume-high' : 'volume-mute'} size={22} color={colors.text} />
-        </Pressable>
-        <Pressable style={styles.iconButton} onPress={() => setSettingsOpen(true)} accessibilityLabel="Ajustes">
-          <Ionicons name="settings-outline" size={22} color={colors.text} />
-        </Pressable>
-      </View>
-
-      {driving && session ? (
-        <Driving session={session} stageLength={stageLength} bestTime={bestTime} newRecord={newRecord} onDone={stop} />
-      ) : (
-        <Ready
-          distance={stageLength}
-          noteCount={noteCount}
-          bestTime={bestTime}
-          onEdit={onEdit}
-          onStart={() => setDisclaimer(true)}
-        />
-      )}
-
+      <Header
+        title="Tramo"
+        left={<RoundButton icon="chevron-back" label="Volver" onPress={onClose} />}
+        right={<RoundButton icon="options-outline" label="Ajustes" onPress={() => setSettingsOpen(true)} />}
+      />
+      <Ready
+        stage={stage}
+        distance={stageLength}
+        noteCount={noteCount}
+        bestTime={bestTime}
+        onEdit={onEdit}
+        onStart={() => setDisclaimer(true)}
+      />
       <Disclaimer visible={disclaimer} onAccept={begin} onCancel={() => setDisclaimer(false)} />
       <SettingsSheet visible={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </View>
@@ -101,38 +107,45 @@ export function DriveScreen({ stage, onEdit, onClose }: Props) {
 }
 
 function Ready({
+  stage,
   distance,
   noteCount,
   bestTime,
   onEdit,
   onStart,
 }: {
+  stage: Stage;
   distance: number;
   noteCount: number;
   bestTime: number | null;
   onEdit: () => void;
   onStart: () => void;
 }) {
+  const { path, notes } = useMemo(() => {
+    const p = buildPath(stage.route);
+    return { path: p, notes: generatePacenotes(p) };
+  }, [stage]);
+
   return (
     <View style={styles.ready}>
-      <View style={styles.statsCard}>
-        <Stat label="Distancia" value={formatKm(distance)} />
-        <Stat label="Notas" value={String(noteCount)} />
-        <Stat label="Mejor tiempo" value={bestTime ? formatTime(bestTime) : '—'} />
+      <Text style={styles.stageName} numberOfLines={2}>
+        {stage.name}
+      </Text>
+      <View style={styles.mapCard}>
+        <StageMap stops={stage.stops} route={stage.route} path={path} notes={notes} />
       </View>
+      <DottedCard style={styles.statsCard}>
+        <Stat label="distancia" value={formatKm(distance)} />
+        <Stat label="notas" value={String(noteCount)} />
+        <Stat label="mejor tiempo" value={bestTime ? formatTime(bestTime) : '—'} />
+      </DottedCard>
       <Text style={styles.readyHelp}>
-        Pon la navegación que quieras (Google Maps, Waze…) y deja Rally4ver en segundo plano: las notas se cantan solas
-        desde la salida. Si empiezas a mitad de tramo también funciona, pero sin cronómetro.
+        Pon tu navegador (Google Maps, Waze…) y deja Rally4ver en segundo plano: las notas se cantan solas desde la
+        salida.
       </Text>
       <View style={{ flex: 1 }} />
-      <Pressable style={styles.secondaryButton} onPress={onEdit}>
-        <Ionicons name="map-outline" size={20} color={colors.text} />
-        <Text style={styles.secondaryText}>Editar ruta</Text>
-      </Pressable>
-      <Pressable style={styles.startButton} onPress={onStart}>
-        <Ionicons name="flag" size={22} color="#000" />
-        <Text style={styles.startText}>EMPEZAR TRAMO</Text>
-      </Pressable>
+      <SecondaryButton title="Editar ruta" icon="map-outline" onPress={onEdit} />
+      <PrimaryButton title="EMPEZAR TRAMO" icon="flag" onPress={onStart} />
     </View>
   );
 }
@@ -157,18 +170,21 @@ function Driving({
   if (status === 'finished') {
     return (
       <View style={styles.finish}>
+        <View style={styles.finishBadge}>
+          <Ionicons name="flag" size={44} color={night.page} />
+        </View>
         <Text style={styles.finishTitle}>META</Text>
         {finishTime !== null ? (
           <Text style={styles.finishTime}>{formatTime(finishTime)}</Text>
         ) : (
-          <Text style={styles.readyHelp}>Sin tiempo: empezaste a mitad de tramo.</Text>
+          <Text style={styles.nightHelp}>Sin tiempo: empezaste a mitad de tramo o hubo un salto de GPS.</Text>
         )}
         {newRecord && <Text style={styles.record}>¡Mejor tiempo!</Text>}
         {!newRecord && bestTime !== null && finishTime !== null && (
-          <Text style={styles.readyHelp}>Mejor: {formatTime(bestTime)}</Text>
+          <Text style={styles.nightHelp}>Mejor: {formatTime(bestTime)}</Text>
         )}
-        <Pressable style={[styles.startButton, { alignSelf: 'stretch' }]} onPress={onDone}>
-          <Text style={styles.startText}>VOLVER</Text>
+        <Pressable style={styles.nightButton} onPress={onDone}>
+          <Text style={styles.nightButtonText}>VOLVER</Text>
         </Pressable>
       </View>
     );
@@ -179,40 +195,37 @@ function Driving({
     <View style={styles.driving}>
       <StatusStrip status={status} s={s} stageLength={stageLength} toStart={toStart} />
 
-      {upcoming ? (
-        <View style={[styles.noteCard, tight && styles.noteCardTight]}>
-          <Text style={[styles.noteText, tight && styles.noteTextTight]} adjustsFontSizeToFit numberOfLines={1}>
-            {noteLabel(upcoming)}
+      <View style={[styles.noteCard, tight && styles.noteCardTight]}>
+        <Text style={[styles.noteText, tight && styles.noteTextTight]} adjustsFontSizeToFit numberOfLines={1}>
+          {upcoming ? noteLabel(upcoming) : 'A META'}
+        </Text>
+        {upcoming && toUpcoming !== null && (
+          <Text style={[styles.noteDistance, tight && styles.noteTextTight]}>
+            {toUpcoming < 5 ? 'ahora' : `a ${Math.round(toUpcoming / 10) * 10} m`}
           </Text>
-          {toUpcoming !== null && (
-            <Text style={[styles.noteDistance, tight && styles.noteTextTight]}>
-              {toUpcoming < 5 ? 'ahora' : `a ${Math.round(toUpcoming / 10) * 10} m`}
-            </Text>
-          )}
-        </View>
-      ) : (
-        <View style={styles.noteCard}>
-          <Text style={styles.noteText}>A META</Text>
-        </View>
-      )}
+        )}
+      </View>
 
       {upcoming && following && (
-        <Text style={styles.following} numberOfLines={1} adjustsFontSizeToFit>
-          {followingLabel(upcoming, following)}
-        </Text>
+        <View style={styles.followingRow}>
+          <Text style={styles.followingLink}>{linkLabel(upcoming)}</Text>
+          <Text style={styles.following} numberOfLines={1} adjustsFontSizeToFit>
+            {noteLabel(following)}
+          </Text>
+        </View>
       )}
 
       <View style={{ flex: 1 }} />
 
       <View style={styles.bottomStats}>
-        <Stat label="km/h" value={String(Math.round(speed * 3.6))} big />
-        <Stat label="Tiempo" value={timed && elapsed !== null ? formatTime(elapsed) : '—'} big />
+        <Stat label="km/h" value={String(Math.round(speed * 3.6))} night />
+        <Stat label="tiempo" value={timed && elapsed !== null ? formatTime(elapsed) : '—'} night />
         {liveDelta && timed && (
           <Stat
             label="vs mejor"
             value={delta !== null ? formatDelta(delta) : '—'}
-            color={delta === null ? colors.text : delta <= 0 ? '#3DDC84' : colors.danger}
-            big
+            color={delta === null ? night.ink : delta <= 0 ? '#3DDC84' : night.danger}
+            night
           />
         )}
       </View>
@@ -220,11 +233,11 @@ function Driving({
   );
 }
 
-function followingLabel(upcoming: Pacenote, following: Pacenote): string {
+function linkLabel(upcoming: Pacenote): string {
   const link = upcoming.link;
-  const prefix =
-    link?.kind === 'y' ? 'Y' : link?.kind === 'distance' ? (link.meters > 1000 ? 'RECTA' : String(link.meters)) : '';
-  return `${prefix} · ${noteLabel(following)}`;
+  if (link?.kind === 'y') return 'Y';
+  if (link?.kind === 'distance') return link.meters > 1000 ? 'RECTA' : String(link.meters);
+  return '';
 }
 
 function StatusStrip({
@@ -239,15 +252,15 @@ function StatusStrip({
   toStart: number | null;
 }) {
   if (status === 'approach') {
+    const text =
+      toStart === null
+        ? 'BUSCANDO GPS…'
+        : toStart <= START_RADIUS_M
+          ? 'EN LA SALIDA · ¡CUANDO QUIERAS!'
+          : `VE A LA SALIDA · ${formatKm(toStart)}`;
     return (
-      <View style={[styles.strip, styles.stripInfo]}>
-        <Text style={styles.stripText}>
-          {toStart === null
-            ? 'BUSCANDO GPS…'
-            : toStart <= START_RADIUS_M
-              ? 'EN LA SALIDA · ¡CUANDO QUIERAS!'
-              : `VE A LA SALIDA · ${formatKm(toStart)}`}
-        </Text>
+      <View style={styles.strip}>
+        <Text style={styles.stripText}>{text}</Text>
       </View>
     );
   }
@@ -276,17 +289,17 @@ function Disclaimer({ visible, onAccept, onCancel }: { visible: boolean; onAccep
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.modalBackdrop}>
         <View style={styles.modal}>
-          <Ionicons name="warning" size={36} color={colors.note} />
-          <Text style={styles.modalTitle}>Carretera abierta</Text>
+          <View style={styles.warnIcon}>
+            <Ionicons name="warning-outline" size={34} color={colors.ink} />
+          </View>
+          <Header title="Carretera abierta" />
           <Text style={styles.modalText}>
             Esto no es un rally: hay tráfico, peatones y límites de velocidad. Las notas son orientativas y salen de
             datos de mapas que pueden tener errores. Conduce con prudencia; usas Rally4ver bajo tu responsabilidad.
           </Text>
-          <Text style={styles.modalText}>No manipules el móvil mientras conduces.</Text>
-          <Pressable style={[styles.startButton, { alignSelf: 'stretch' }]} onPress={onAccept}>
-            <Text style={styles.startText}>ENTENDIDO</Text>
-          </Pressable>
-          <Pressable onPress={onCancel} style={{ padding: 10 }}>
+          <Text style={[styles.modalText, { fontWeight: '700' }]}>No manipules el móvil mientras conduces.</Text>
+          <PrimaryButton title="ENTENDIDO" onPress={onAccept} style={{ alignSelf: 'stretch' }} />
+          <Pressable onPress={onCancel} style={{ padding: 8 }}>
             <Text style={styles.cancelText}>Cancelar</Text>
           </Pressable>
         </View>
@@ -295,100 +308,141 @@ function Disclaimer({ visible, onAccept, onCancel }: { visible: boolean; onAccep
   );
 }
 
-function Stat({ label, value, big, color }: { label: string; value: string; big?: boolean; color?: string }) {
+function Stat({ label, value, night: dark, color }: { label: string; value: string; night?: boolean; color?: string }) {
   return (
     <View style={styles.stat}>
-      <Text style={[styles.statValue, big && styles.statValueBig, color ? { color } : null]}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, dark && styles.statValueNight, color ? { color } : null]}>{value}</Text>
+      <Text style={[styles.statLabel, dark && { color: night.muted }]}>{label}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 16 },
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '900' },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
+  root: { flex: 1, backgroundColor: colors.card },
+  night: { flex: 1, backgroundColor: night.page },
+  ready: { flex: 1, paddingTop: 18, paddingHorizontal: 20, gap: 14 },
+  stageName: { fontSize: 26, fontWeight: '800', color: colors.ink, textAlign: 'center' },
+  mapCard: {
+    height: 220,
+    borderRadius: radius.card,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: colors.dots,
+  },
+  statsCard: { flexDirection: 'row', justifyContent: 'space-around' },
+  readyHelp: { color: colors.muted, fontSize: 13, lineHeight: 19, textAlign: 'center' },
+  driving: { flex: 1, paddingTop: 18, paddingHorizontal: 18, gap: 16 },
+  strip: {
+    borderRadius: radius.pill,
+    paddingVertical: 11,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderColor: colors.border,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: night.dots,
   },
-  ready: { flex: 1, paddingTop: 24, gap: 16 },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderRadius: radius,
-    padding: 18,
-    borderLeftWidth: 6,
-    borderLeftColor: colors.note,
-  },
-  readyHelp: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: 'center' },
-  secondaryButton: {
-    flexDirection: 'row',
-    gap: 8,
-    height: 52,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: { color: colors.text, fontWeight: '800', fontSize: 16 },
-  startButton: {
-    flexDirection: 'row',
-    gap: 10,
-    height: 64,
-    borderRadius: 14,
-    backgroundColor: colors.note,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  startText: { color: '#000', fontWeight: '900', fontSize: 20, letterSpacing: 1 },
-  driving: { flex: 1, paddingTop: 16, gap: 14 },
-  strip: { borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  stripInfo: { backgroundColor: colors.surfaceHigh },
-  stripDanger: { backgroundColor: colors.accent },
-  stripText: { color: colors.text, fontWeight: '900', fontSize: 16, letterSpacing: 1 },
+  stripDanger: { backgroundColor: night.danger, borderStyle: 'solid', borderColor: night.danger },
+  stripText: { color: night.ink, fontWeight: '800', fontSize: 15, letterSpacing: 1 },
   progressWrap: { gap: 6 },
-  progressTrack: { height: 8, borderRadius: 4, backgroundColor: colors.surfaceHigh, overflow: 'hidden' },
-  progressFill: { height: 8, backgroundColor: colors.accent },
-  progressText: { color: colors.muted, fontSize: 13, fontWeight: '700', textAlign: 'right' },
+  progressTrack: { height: 10, borderRadius: 5, borderWidth: 1.5, borderColor: night.ink, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: night.ink },
+  progressText: { color: night.muted, fontSize: 13, fontWeight: '700', textAlign: 'right' },
   noteCard: {
-    backgroundColor: colors.note,
-    borderRadius: radius,
-    paddingVertical: 28,
+    backgroundColor: night.card,
+    borderRadius: 28,
+    paddingVertical: 30,
     paddingHorizontal: 16,
     alignItems: 'center',
     gap: 6,
   },
-  noteCardTight: { backgroundColor: colors.accent },
-  noteText: { color: '#000', fontSize: 52, fontWeight: '900', letterSpacing: 1 },
+  noteCardTight: { backgroundColor: night.danger },
+  noteText: { color: colors.ink, fontSize: 54, fontWeight: '900', letterSpacing: 0.5 },
   noteTextTight: { color: '#FFFFFF' },
-  noteDistance: { color: '#000', fontSize: 22, fontWeight: '800' },
-  following: { color: colors.muted, fontSize: 28, fontWeight: '900', textAlign: 'center' },
+  noteDistance: { color: colors.ink, fontSize: 22, fontWeight: '700' },
+  followingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderStyle: 'dotted',
+    borderColor: night.dots,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  followingLink: {
+    color: night.page,
+    backgroundColor: night.ink,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  following: { color: night.ink, fontSize: 28, fontWeight: '800', flexShrink: 1 },
   bottomStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: colors.surface,
-    borderRadius: radius,
-    paddingVertical: 14,
+    backgroundColor: night.panel,
+    borderRadius: 22,
+    paddingVertical: 16,
   },
   stat: { alignItems: 'center' },
-  statValue: { color: colors.text, fontSize: 22, fontWeight: '900' },
-  statValueBig: { fontSize: 30 },
-  statLabel: { color: colors.muted, fontSize: 12 },
-  finish: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  finishTitle: { color: colors.accent, fontSize: 64, fontWeight: '900', fontStyle: 'italic', letterSpacing: 4 },
-  finishTime: { color: colors.text, fontSize: 56, fontWeight: '900' },
-  record: { color: colors.note, fontSize: 24, fontWeight: '900' },
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', padding: 24 },
-  modal: { backgroundColor: colors.surface, borderRadius: radius, padding: 24, alignItems: 'center', gap: 14 },
-  modalTitle: { color: colors.text, fontSize: 24, fontWeight: '900' },
-  modalText: { color: colors.text, fontSize: 15, lineHeight: 22, textAlign: 'center' },
+  statValue: { color: colors.ink, fontSize: 22, fontWeight: '800' },
+  statValueNight: { color: night.ink, fontSize: 30 },
+  statLabel: { color: colors.muted, fontSize: 12, fontWeight: '600' },
+  finish: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 24 },
+  finishBadge: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: night.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  finishTitle: { color: night.ink, fontSize: 52, fontWeight: '900', letterSpacing: 6 },
+  finishTime: { color: night.ink, fontSize: 56, fontWeight: '900' },
+  record: {
+    color: night.page,
+    backgroundColor: night.ink,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  nightHelp: { color: night.muted, fontSize: 14, textAlign: 'center' },
+  nightButton: {
+    alignSelf: 'stretch',
+    height: 58,
+    borderRadius: radius.button,
+    backgroundColor: night.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  nightButtonText: { color: night.page, fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', padding: 22 },
+  modal: {
+    backgroundColor: colors.card,
+    borderRadius: 28,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 14,
+  },
+  warnIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalText: { color: colors.ink, fontSize: 15, lineHeight: 22, textAlign: 'center' },
   cancelText: { color: colors.muted, fontSize: 15, fontWeight: '700' },
 });
