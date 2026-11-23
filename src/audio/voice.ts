@@ -4,7 +4,8 @@ import * as Speech from 'expo-speech';
 
 import type { Pacenote } from '../core/pacenotes';
 import { noteTokens } from '../core/phrase';
-import { CLIPS } from './clips';
+import { settingsStore } from '../data/settings';
+import { VOICES } from './clips';
 
 /**
  * Co-driver voice: pre-generated AI clips (scripts/generate_voice.py), one per
@@ -20,8 +21,12 @@ let playlist: AudioPlaylist | null = null;
  * player constructor does (expo-audio SDK 58), so resolve them to URIs here.
  */
 const resolved = new Map<number, AudioSource>();
+function clips(): Record<string, number> {
+  return VOICES[settingsStore.get().voiceId].clips;
+}
+
 function clipSource(token: string): AudioSource {
-  const id = CLIPS[token];
+  const id = clips()[token];
   let src = resolved.get(id);
   if (!src) {
     const asset = Asset.fromModule(id);
@@ -47,7 +52,8 @@ function ensureSetup(): Promise<void> {
 
 /** Plays tokens in order; if something is already being said, they are queued after it. */
 export async function sayTokens(tokens: string[], rate = 1) {
-  const missing = tokens.filter((t) => !(t in CLIPS));
+  const available = clips();
+  const missing = tokens.filter((t) => !(t in available));
   if (missing.length) {
     Speech.speak(tokens.filter((t) => t !== ',').join(' '), { language: 'es-ES', rate });
     return;
@@ -85,6 +91,7 @@ export function sayFinish(record: boolean, rate?: number) {
 }
 
 export function previewVoice(rate?: number) {
+  silence(); // switching voices quickly shouldn't queue several samples
   void sayTokens(
     [
       'cuidado',

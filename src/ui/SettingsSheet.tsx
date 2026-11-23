@@ -1,6 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { VOICES, type VoiceId } from '../audio/clips';
 import { previewVoice } from '../audio/voice';
 import { LEAD_OPTIONS, RATE_OPTIONS, settingsStore, updateSettings } from '../data/settings';
 import { DottedCard, Header, PrimaryButton, SecondaryButton } from './kit';
@@ -33,6 +34,15 @@ export function SettingsContent() {
       </DottedCard>
 
       <DottedCard style={styles.block}>
+        <Text style={styles.rowLabel}>Voz</Text>
+        <Segmented
+          options={(Object.keys(VOICES) as VoiceId[]).map((id) => ({ value: id, label: VOICES[id].label }))}
+          value={s.voiceId}
+          onChange={(v) => {
+            updateSettings({ voiceId: v });
+            previewVoice(s.voiceRate); // hear it straight away
+          }}
+        />
         <Text style={styles.rowLabel}>Velocidad de la voz</Text>
         <Segmented
           options={RATE_OPTIONS.map((r, i) => ({ value: r, label: RATE_LABEL[i] }))}
@@ -58,7 +68,8 @@ export function SettingsContent() {
       </DottedCard>
 
       <Text style={styles.credits}>
-        Voz generada con Piper (voces libres de rhasspy/piper-voices). Mapas © OpenStreetMap · OpenFreeMap. Rutas OSRM.
+        Voces generadas con Piper: davefx (CC0) y SHARVARD (CC BY 3.0, Universidad de Edimburgo). Mapas © OpenStreetMap
+        · OpenFreeMap. Rutas OSRM.
       </Text>
     </View>
   );
@@ -94,7 +105,7 @@ export function SettingsSheet({ visible, onClose }: { visible: boolean; onClose:
   );
 }
 
-function Segmented<T extends number>({
+function Segmented<T extends string | number>({
   options,
   value,
   onChange,

@@ -67,10 +67,10 @@ Fetch a route's coordinates and feed them as GPS: `xcrun simctl location <udid> 
 
 ## Voice
 
-Regenerate the clips after changing the vocabulary or the voice (Piper needs Python 3.9–3.13 and ffmpeg):
+Voices offered in AJUSTES are listed in `scripts/voices.json` (id, label, Piper model, speaker); clips go to `assets/voice/<id>/` and `clips.ts` exports `VOICES` + `DEFAULT_VOICE` (the second entry). Regenerate after changing the vocabulary or the voices (Piper needs Python 3.9–3.13 and ffmpeg):
 
 ```bash
-python scripts/generate_voice.py --model <voice>.onnx [--speaker N] [--length-scale 0.85] [--espeak-data <copy of piper/espeak-ng-data>]
+python scripts/generate_voice.py --models-dir <dir with Piper .onnx voices> [--length-scale 0.85] [--espeak-data <copy of piper/espeak-ng-data>]
 ```
 
 `vocabulary.test.ts` fails if the pacenote engine can say a token without a clip. Voices: rhasspy/piper-voices (check each MODEL_CARD license and credit it in AJUSTES). `muestras-voz/` holds listening samples and is gitignored.

@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """Generates the co-driver voice clips with Piper (https://github.com/OHF-Voice/piper1-gpl).
 
-One short AAC clip per token in src/audio/vocabulary.json, silence trimmed so
-the app can chain them like a real co-driver, plus src/audio/clips.ts with the
-static requires Metro needs.
+For every voice in scripts/voices.json: one short AAC clip per token in
+src/audio/vocabulary.json under assets/voice/<voice id>/, silence trimmed so
+the app can chain them like a real co-driver. Writes src/audio/clips.ts with
+the static requires Metro needs.
 
 Usage (Python 3.9-3.13 with `pip install piper-tts`, and ffmpeg on PATH):
 
-    python scripts/generate_voice.py --model path/to/es_ES-davefx-medium.onnx \
-        [--speaker 0] [--length-scale 0.85] [--espeak-data path/to/espeak-ng-data-copy]
+    python scripts/generate_voice.py --models-dir path/to/piper/voices \
+        [--length-scale 0.85] [--espeak-data path/to/espeak-ng-data-copy]
 
+The models dir holds <model>.onnx + <model>.onnx.json, e.g. downloaded with
+`python -m piper.download_voices --download-dir DIR es_ES-davefx-medium`.
 Voices: https://huggingface.co/rhasspy/piper-voices (check each MODEL_CARD license).
 """
 
@@ -26,6 +29,7 @@ from piper import PiperVoice, SynthesisConfig
 
 ROOT = Path(__file__).resolve().parent.parent
 VOCAB = ROOT / "src" / "audio" / "vocabulary.json"
+VOICES = ROOT / "scripts" / "voices.json"
 OUT_DIR = ROOT / "assets" / "voice"
 CLIPS_TS = ROOT / "src" / "audio" / "clips.ts"
 
@@ -35,69 +39,75 @@ def slug(token: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", ascii_.lower()).strip("_")
 
 
+def ffmpeg(*args: str) -> None:
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *args], check=True)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--speaker", type=int, default=None)
+    ap.add_argument("--models-dir", required=True)
     ap.add_argument("--length-scale", type=float, default=0.85)
     ap.add_argument("--espeak-data", default=None, help="espeak-ng data dir (if the bundled one fails)")
     args = ap.parse_args()
 
-    load_kwargs = {"espeak_data_dir": Path(args.espeak_data)} if args.espeak_data else {}
-    voice = PiperVoice.load(args.model, **load_kwargs)
-    cfg = SynthesisConfig(speaker_id=args.speaker, length_scale=args.length_scale)
     vocab: dict[str, str] = json.loads(VOCAB.read_text(encoding="utf-8"))
+    voices: list[dict] = json.loads(VOICES.read_text(encoding="utf-8"))
+    load_kwargs = {"espeak_data_dir": Path(args.espeak_data)} if args.espeak_data else {}
+    models: dict[str, PiperVoice] = {}
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    for old in OUT_DIR.glob("*.m4a"):
+    for old in OUT_DIR.rglob("*.m4a"):
         old.unlink()
 
-    entries = []
-    with tempfile.TemporaryDirectory() as tmp:
-        for token, spoken in vocab.items():
-            name = slug(token)
-            wav_path = Path(tmp) / f"{name}.wav"
-            with wave.open(str(wav_path), "wb") as wav:
-                voice.synthesize_wav(spoken, wav, syn_config=cfg)
-            # Trim leading/trailing silence, keep a 40 ms tail so words don't clip.
-            subprocess.run(
-                [
-                    "ffmpeg", "-loglevel", "error", "-y", "-i", str(wav_path),
+    tokens = [(token, slug(token)) for token in vocab] + [(",", "pausa")]
+    for v in voices:
+        model = models.get(v["model"]) or PiperVoice.load(str(Path(args.models_dir) / f"{v['model']}.onnx"), **load_kwargs)
+        models[v["model"]] = model
+        cfg = SynthesisConfig(speaker_id=v["speaker"], length_scale=args.length_scale)
+        out = OUT_DIR / v["id"]
+        out.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            for token, name in tokens[:-1]:
+                wav_path = Path(tmp) / f"{name}.wav"
+                with wave.open(str(wav_path), "wb") as wav:
+                    model.synthesize_wav(vocab[token], wav, syn_config=cfg)
+                # Trim leading/trailing silence, keep a 40 ms tail so words don't clip.
+                ffmpeg(
+                    "-i", str(wav_path),
                     "-af",
                     "silenceremove=start_periods=1:start_threshold=-45dB,"
                     "areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse,"
                     "apad=pad_dur=0.04",
-                    "-ac", "1", "-c:a", "aac", "-b:a", "64k", str(OUT_DIR / f"{name}.m4a"),
-                ],
-                check=True,
-            )
-            entries.append((token, name))
-            print(f"{token:>22} → {name}.m4a")
-
-        # A short gap clip used between chained notes.
-        subprocess.run(
-            ["ffmpeg", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono",
-             "-t", "0.12", "-c:a", "aac", "-b:a", "32k", str(OUT_DIR / "pausa.m4a")],
-            check=True,
-        )
-        entries.append((",", "pausa"))
+                    "-ac", "1", "-c:a", "aac", "-b:a", "64k", str(out / f"{name}.m4a"),
+                )
+        # A short gap used between chained notes.
+        ffmpeg("-f", "lavfi", "-i", "anullsrc=r=22050:cl=mono", "-t", "0.12", "-c:a", "aac", "-b:a", "32k",
+               str(out / "pausa.m4a"))
+        print(f"{v['id']}: {len(tokens)} clips")
 
     lines = [
-        "// Generated by scripts/generate_voice.py — do not edit by hand.",
-        f"// Voice: {Path(args.model).stem}"
-        + (f" (speaker {args.speaker})" if args.speaker is not None else "")
-        + f", length scale {args.length_scale}.",
+        "// Generated by scripts/generate_voice.py from scripts/voices.json — do not edit by hand.",
+        f"// Length scale {args.length_scale}.",
         "",
         "/* eslint-disable @typescript-eslint/no-require-imports */",
-        "export const CLIPS: Record<string, number> = {",
-        *[f"  {json.dumps(token, ensure_ascii=False)}: require('../../assets/voice/{name}.m4a')," for token, name in entries],
-        "};",
+        "export const VOICES = {",
+    ]
+    for v in voices:
+        lines.append(f"  {json.dumps(v['id'])}: {{")
+        lines.append(f"    label: {json.dumps(v['label'], ensure_ascii=False)},")
+        lines.append("    clips: {")
+        for token, name in tokens:
+            lines.append(f"      {json.dumps(token, ensure_ascii=False)}: require('../../assets/voice/{v['id']}/{name}.m4a'),")
+        lines.append("    } as Record<string, number>,")
+        lines.append("  },")
+    lines += [
+        "} as const;",
         "",
-        f"export const VOICE_NAME = {json.dumps(Path(args.model).stem)};",
+        "export type VoiceId = keyof typeof VOICES;",
+        f"export const DEFAULT_VOICE: VoiceId = {json.dumps(voices[1]['id'] if len(voices) > 1 else voices[0]['id'])};",
         "",
     ]
     CLIPS_TS.write_text("\n".join(lines), encoding="utf-8")
-    print(f"\n{len(entries)} clips → {OUT_DIR.relative_to(ROOT)}, map → {CLIPS_TS.relative_to(ROOT)}")
+    print(f"→ {CLIPS_TS.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

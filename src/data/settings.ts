@@ -1,9 +1,12 @@
 import Storage from 'expo-sqlite/kv-store';
 
+import { DEFAULT_VOICE, VOICES, type VoiceId } from '../audio/clips';
 import { createStore } from '../lib/createStore';
 
 export interface Settings {
   voiceEnabled: boolean;
+  /** Which pre-generated co-driver voice to use (see scripts/voices.json). */
+  voiceId: VoiceId;
   /** Seconds of warning before each bend at the current speed. */
   leadSeconds: number;
   /** Speech rate: 1 = normal, faster sounds more like a real co-driver. */
@@ -19,6 +22,7 @@ export const RATE_OPTIONS = [1, 1.15, 1.3];
 
 const DEFAULTS: Settings = {
   voiceEnabled: true,
+  voiceId: DEFAULT_VOICE,
   leadSeconds: 6,
   voiceRate: 1,
   liveDelta: false,
@@ -36,7 +40,13 @@ function read(): Partial<Settings> {
   }
 }
 
-export const settingsStore = createStore<Settings>({ ...DEFAULTS, ...read() });
+function load(): Settings {
+  const s = { ...DEFAULTS, ...read() };
+  if (!(s.voiceId in VOICES)) s.voiceId = DEFAULT_VOICE; // voice removed in an update
+  return s;
+}
+
+export const settingsStore = createStore<Settings>(load());
 
 export function updateSettings(patch: Partial<Settings>) {
   settingsStore.set(patch);

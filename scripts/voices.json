@@ -1,0 +1,23 @@
+[
+  {
+    "id": "davefx",
+    "label": "Hombre 1",
+    "model": "es_ES-davefx-medium",
+    "speaker": null,
+    "license": "CC0"
+  },
+  {
+    "id": "sharvard-m",
+    "label": "Hombre 2",
+    "model": "es_ES-sharvard-medium",
+    "speaker": 0,
+    "license": "CC BY 3.0 (SHARVARD corpus, University of Edinburgh)"
+  },
+  {
+    "id": "sharvard-f",
+    "label": "Mujer",
+    "model": "es_ES-sharvard-medium",
+    "speaker": 1,
+    "license": "CC BY 3.0 (SHARVARD corpus, University of Edinburgh)"
+  }
+]
