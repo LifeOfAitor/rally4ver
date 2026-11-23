@@ -65,6 +65,16 @@ route (LatLon[]) → buildPath (resample every 5 m, local XY)
 
 Fetch a route's coordinates and feed them as GPS: `xcrun simctl location <udid> start --speed=25 --interval=1 lat,lon lat,lon …`. Speech activity shows in `log show --predicate 'process == "Rally4ver" AND eventMessage CONTAINS "_speechJobFinished"'`. The simulator may stop delivering fixes ~100 m before the last waypoint; `location set` the end point to finish.
 
+## Releases (Android APK on GitHub)
+
+```bash
+npx expo prebuild --platform android
+cd android && JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+gh release create vX.Y.Z rally4ver-android-vX.Y.Z.apk --title "Rally4ver X.Y.Z (Android)" --prerelease
+```
+
+arm64-only keeps the APK ~38 MB (all ABIs: ~120 MB). Bump `version` in app.json. Signed with the template debug key (fine for sideloading; a real keystore is needed before Play Store, and updates must keep the same key). Repo: github.com/LifeOfAitor/rally4ver.
+
 ## Voice
 
 Voices offered in AJUSTES are listed in `scripts/voices.json` (id, label, Piper model, speaker); clips go to `assets/voice/<id>/` and `clips.ts` exports `VOICES` + `DEFAULT_VOICE` (the second entry). Regenerate after changing the vocabulary or the voices (Piper needs Python 3.9–3.13 and ffmpeg):
