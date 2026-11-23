@@ -4,6 +4,13 @@ App para **Android** que te canta las curvas de una carretera como un copiloto d
 
 Eliges un tramo (por ejemplo, el puerto que haces todos los fines de semana), la app lo analiza y, mientras conduces, te va diciendo por voz lo que viene antes de llegar. Funciona en segundo plano, así que puedes llevar Google Maps o Waze delante.
 
+<p align="center">
+  <img src="docs/screenshots/1-tramos.png" width="200" alt="Lista de tramos">
+  <img src="docs/screenshots/3-editor.png" width="200" alt="Elegir la ruta">
+  <img src="docs/screenshots/2-tramo.png" width="200" alt="Tramo guardado">
+  <img src="docs/screenshots/4-conduciendo.png" width="200" alt="Notas mientras conduces">
+</p>
+
 ## Qué hace
 
 - Convierte cualquier ruta en notas de copiloto, con escala del 1 (la más cerrada) al 6 (casi recta).
@@ -32,6 +39,12 @@ cuidado, izquierda tres larga, cien, derecha dos cierra y horquilla izquierda
 | `cien` | 100 metros hasta la siguiente curva |
 | `y` | la siguiente curva va pegada a esta |
 | `cuidado` | curva cerrada después de una recta larga |
+
+En ajustes eliges la voz, cuánto antes te canta cada curva y la velocidad de la voz.
+
+<p align="center">
+  <img src="docs/screenshots/5-ajustes.png" width="200" alt="Ajustes">
+</p>
 
 ## Cómo se usa
 
