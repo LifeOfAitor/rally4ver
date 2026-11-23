@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Rally4ver",
+    "slug": "rally4ver",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0B0B0D",
+    "ios": {
+      "bundleIdentifier": "com.aitorgaillard.rally4ver",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": ["location", "audio"],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.aitorgaillard.rally4ver",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0B0D",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Rally4ver necesita tu ubicación en segundo plano para cantarte las notas del tramo con la pantalla bloqueada.",
+          "locationWhenInUsePermission": "Rally4ver usa tu ubicación para saber en qué punto del tramo estás.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      "expo-sqlite",
+      "expo-task-manager",
+      "expo-build-properties",
+      "@maplibre/maplibre-react-native",
+      "expo-font"
+    ]
+  }
+}
