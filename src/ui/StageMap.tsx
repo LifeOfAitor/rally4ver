@@ -28,6 +28,8 @@ interface Props {
   onLongPressStop?: (index: number) => void;
   /** Extra bottom padding when fitting the route (space taken by a sheet). */
   bottomInset?: number;
+  /** Point to center on when there's no route yet (e.g. the user's position). */
+  focus?: LatLon | null;
 }
 
 function boundsOf(route: LatLon[]): [number, number, number, number] | null {
@@ -61,6 +63,7 @@ export function StageMap({
   onMoveStop,
   onLongPressStop,
   bottomInset = 0,
+  focus = null,
 }: Props) {
   const camera = useRef<CameraRef>(null);
 
@@ -113,8 +116,16 @@ export function StageMap({
   // Frame the route from the first render (the camera may not be ready for fitBounds yet)…
   const [initialView] = useState(() => {
     const b = route ? boundsOf(route) : null;
-    return b ? { bounds: b, padding } : { center: [-3.7038, 40.4168] as [number, number], zoom: 6 };
+    if (b) return { bounds: b, padding };
+    if (focus) return { center: [focus.longitude, focus.latitude] as [number, number], zoom: 11 };
+    return { center: [-3.7038, 40.4168] as [number, number], zoom: 6 };
   });
+  // Center on the user (or the first stop) while there's no route to frame.
+  useEffect(() => {
+    if (focus && !route)
+      camera.current?.flyTo({ center: [focus.longitude, focus.latitude], zoom: 12.5, duration: 800 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus]);
   // …and re-fit whenever a new route arrives.
   useEffect(() => {
     const b = route ? boundsOf(route) : null;

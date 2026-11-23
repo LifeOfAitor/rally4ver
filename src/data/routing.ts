@@ -1,4 +1,6 @@
+import { farthestPoint, hasRetrace, viaCandidates, withoutDetours } from '../core/alternatives';
 import type { LatLon } from '../core/geo';
+import { overlap } from '../core/routeMatch';
 import { extractUrl, isShortLink, parseRouteLink, type RouteRequest, type Stop } from '../core/importLink';
 
 /**
@@ -141,4 +143,48 @@ export async function resolveStops(request: RouteRequest, here: LatLon | null): 
   // Sequential on purpose: Nominatim allows 1 request per second.
   for (const stop of [...request.waypoints, request.destination]) rest.push(await resolveStop(stop));
   return [origin, ...rest];
+}
+
+/**
+ * Looks for other roads between A and B than the router's own alternatives
+ * (which tend to stick to the fast roads): routes through points to either
+ * side of A→B, keeps the part that leaves the known routes and routes again
+ * through a point on it. Calls `onFound` for each new, sensible route.
+ * About two requests per through-point, one at a time to be gentle with the
+ * free server.
+ */
+export async function findMoreRoutes(
+  a: LatLon,
+  b: LatLon,
+  known: RoutedRoute[],
+  onFound: (route: RoutedRoute) => void,
+  isCancelled: () => boolean,
+): Promise<void> {
+  if (known.length === 0) return;
+  const routes = [...known];
+  const fastest = routes.reduce((f, r) => (r.duration < f.duration ? r : f));
+  for (const via of viaCandidates(a, b)) {
+    if (isCancelled()) return;
+    try {
+      const [first] = await fetchRoutes([a, via, b]);
+      if (isCancelled()) return;
+      const { point, distance } = farthestPoint(
+        withoutDetours(first.coordinates),
+        routes.map((r) => r.coordinates),
+      );
+      if (distance < 300) continue; // it's one of the roads we already have
+      const [route] = await fetchRoutes([a, point, b]);
+      if (isCancelled()) return;
+      if (hasRetrace(route.coordinates)) continue;
+      if (route.duration > fastest.duration * 2.5 || route.distance > fastest.distance * 2) continue;
+      const duplicate = routes.some(
+        (r) => overlap(r.coordinates, route.coordinates) > 0.85 && overlap(route.coordinates, r.coordinates) > 0.85,
+      );
+      if (duplicate) continue;
+      routes.push(route);
+      onFound(route);
+    } catch {
+      // A failed request only means one alternative less.
+    }
+  }
 }

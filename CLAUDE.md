@@ -106,6 +106,7 @@ python scripts/generate_voice.py --models-dir <dir with Piper .onnx voices> [--l
 
 ## Product decisions
 
+- **Finding the twisty road**: OSRM's own alternatives stick to the fast roads (with A/B marked by hand the mountain road over Jaizkibel never came up). With 2 stops the editor also runs `findMoreRoutes` (data/routing.ts + core/alternatives.ts): route through points ±12 % of |AB| to each side at 1/3, 1/2, 2/3; drop the out-and-back detour; route again through the point farthest from known routes; reject retraces, >2.5× time / >2× distance, and duplicates (overlap ≥ 0.85). ~9 requests, sequential, a few seconds; routes are appended as found. Chips show curves and MÁS RÁPIDA / MÁS CURVAS. A reopened stage whose saved road isn't found again is offered as «Tu ruta guardada».
 - **The user picks the road** ("la ruta a la que darle caña"), not the router. Google links carry only stops (plus `!5i<n>` = chosen alternative), so: show OSRM alternatives (only with 2 stops) and preselect `!5i`; a map tap adds a via in the leg it belongs to (`core/stops.ts`); after reversing or moving stops keep the most similar route (`core/routeMatch.ts`). Reverse button swaps start/finish.
 - Always a fixed route (no free / predictive mode). Routes from: A→B on the map, Google Maps share link (origin/destination/waypoints re-routed on OSM, then drag to adjust), GPX import.
 - Recce mode (record a drive, notes from the real GPS trace) and stage timer with live delta vs best run (optional, off by default) come after the MVP.

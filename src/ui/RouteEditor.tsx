@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,6 +14,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatKm } from '../core/format';
+import type { LatLon } from '../core/geo';
+import { generatePacenotes } from '../core/pacenotes';
+import { buildPath } from '../core/path';
+import type { RoutedRoute } from '../data/routing';
 import { noteLabel } from '../core/phrase';
 import { currentLocation } from '../data/location';
 import { saveStage, type Stage, type StageSource, updateStage } from '../data/stageStore';
@@ -35,7 +39,16 @@ const SHEET_HEIGHT = 230;
 export function RouteEditor({ stage, onDone }: Props) {
   const insets = useSafeAreaInsets();
   const draft = useRouteDraft(stage?.stops ?? [], stage?.route ?? null);
-  const { stops, setStops, routes, selected, select, route, path, notes, loading, error } = draft;
+  const { stops, setStops, routes, selected, select, route, path, notes, loading, searching, error } = draft;
+  const labels = useMemo(() => routeLabels(routes), [routes]);
+  // New stage: open the map where you are instead of on the whole country.
+  const [focus, setFocus] = useState<LatLon | null>(stage?.stops[0] ?? null);
+  useEffect(() => {
+    if (stage) return;
+    currentLocation()
+      .then((here) => here && setFocus(here))
+      .catch(() => {});
+  }, [stage]);
   const [name, setName] = useState(stage?.name ?? '');
   const [source, setSource] = useState<StageSource>(stage?.source ?? 'mapa');
   const [importing, setImporting] = useState(false);
@@ -102,6 +115,7 @@ export function RouteEditor({ stage, onDone }: Props) {
         path={path}
         notes={notes}
         bottomInset={SHEET_HEIGHT}
+        focus={stops.length === 1 ? stops[0] : focus}
         alternatives={routes
           .map((r, index) => ({ index, coordinates: r.coordinates }))
           .filter((a) => a.index !== selected)}
@@ -151,18 +165,28 @@ export function RouteEditor({ stage, onDone }: Props) {
             {loading && <ActivityIndicator color={colors.ink} />}
           </View>
           {error && <Text style={styles.error}>{error}</Text>}
-          {routes.length > 1 && (
+          {(routes.length > 1 || searching) && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               {routes.map((r, i) => (
                 <Pressable key={i} style={[styles.alt, i === selected && styles.altOn]} onPress={() => select(i)}>
+                  {labels[i].badge && (
+                    <Text style={[styles.badge, i === selected && styles.badgeOn]}>{labels[i].badge}</Text>
+                  )}
                   <Text style={[styles.altTitle, i === selected && styles.altTextOn]}>
-                    {formatKm(r.distance)} · {Math.round(r.duration / 60)} min
+                    {formatKm(r.distance)}
+                    {Number.isFinite(r.duration) ? ` · ${Math.round(r.duration / 60)} min` : ''}
                   </Text>
                   <Text style={[styles.altSummary, i === selected && styles.altTextOn]} numberOfLines={1}>
-                    {r.summary || `Ruta ${i + 1}`}
+                    {labels[i].curves} curvas · {r.summary || `Ruta ${i + 1}`}
                   </Text>
                 </Pressable>
               ))}
+              {searching && (
+                <View style={[styles.alt, styles.searching]}>
+                  <ActivityIndicator color={colors.ink} size="small" />
+                  <Text style={styles.altSummary}>Buscando más{'\n'}carreteras…</Text>
+                </View>
+              )}
             </ScrollView>
           )}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -256,6 +280,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   altOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
+  badge: {
+    alignSelf: 'flex-start',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    color: colors.onInk,
+    backgroundColor: colors.ink,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginBottom: 4,
+  },
+  badgeOn: { color: colors.ink, backgroundColor: colors.onInk },
+  searching: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   altTitle: { color: colors.ink, fontWeight: '800', fontSize: 15 },
   altSummary: { color: colors.muted, fontSize: 12, marginTop: 2 },
   altTextOn: { color: colors.onInk },
@@ -285,3 +324,17 @@ const styles = StyleSheet.create({
   },
   saveButton: { height: 54, paddingHorizontal: 22 },
 });
+
+/** Curves per route and "MÁS RÁPIDA" / "MÁS CURVAS" badges to compare them at a glance. */
+function routeLabels(routes: RoutedRoute[]): { curves: number; badge: string | null }[] {
+  const curves = routes.map((r) => (r.coordinates.length > 1 ? generatePacenotes(buildPath(r.coordinates)).length : 0));
+  if (routes.length < 2) return curves.map((c) => ({ curves: c, badge: null }));
+  const perKm = curves.map((c, i) => c / Math.max(1, routes[i].distance / 1000));
+  const timed = routes.map((r, i) => ({ d: r.duration, i })).filter((x) => Number.isFinite(x.d));
+  const fastest = timed.length ? timed.reduce((a, b) => (b.d < a.d ? b : a)).i : -1;
+  const curviest = perKm.indexOf(Math.max(...perKm));
+  return curves.map((c, i) => ({
+    curves: c,
+    badge: i === curviest ? 'MÁS CURVAS' : i === fastest ? 'MÁS RÁPIDA' : null,
+  }));
+}
