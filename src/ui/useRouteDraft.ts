@@ -21,8 +21,14 @@ export interface RouteDraft {
   error: string | null;
 }
 
-/** Stops being edited on the map → routed alternatives → selected route → pacenotes. */
-export function useRouteDraft(initialStops: LatLon[] = []): RouteDraft {
+/**
+ * Stops being edited on the map → routed alternatives → selected route → pacenotes.
+ *
+ * `initialRoute` is the geometry saved with a stage: when the stage is reopened
+ * the router's alternatives are recalculated and the one matching it is selected,
+ * so the road the user chose is kept.
+ */
+export function useRouteDraft(initialStops: LatLon[] = [], initialRoute: LatLon[] | null = null): RouteDraft {
   const [stops, setStopsState] = useState<LatLon[]>(initialStops);
   const [routes, setRoutes] = useState<RoutedRoute[]>([]);
   const [selected, setSelected] = useState(0);
@@ -32,7 +38,7 @@ export function useRouteDraft(initialStops: LatLon[] = []): RouteDraft {
   /** Explicit choice from an imported link; otherwise we follow `chosen`. */
   const preferred = useRef<number | undefined>(undefined);
   /** Geometry of the route the user had selected, to keep that choice across recalculations. */
-  const chosen = useRef<LatLon[] | null>(null);
+  const chosen = useRef<LatLon[] | null>(initialRoute);
 
   const setStops = useCallback((next: LatLon[], preferredAlternative?: number) => {
     preferred.current = preferredAlternative;

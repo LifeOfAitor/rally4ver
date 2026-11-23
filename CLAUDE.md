@@ -40,6 +40,11 @@ route (LatLon[]) → buildPath (resample every 5 m, local XY)
 | `src/data/routing.ts` | OSRM routing + Nominatim geocoding (free FOSSGIS/OSMF servers), short-link resolution |
 | `src/data/stageStore.ts` | expo-sqlite: stages (route geometry) and runs (timer samples) |
 | `src/ui/HomeScreen.tsx` | stage list · `RouteEditor.tsx` map editor (tap = stop, drag, link import) · `StageMap.tsx` MapLibre route + note dots |
+| `src/core/session.ts` | **pure drive logic**: fixes → status (approach/running/offroute/finished), calls, timer, live delta; voids time on impossible jumps; finish within 50 m of the end |
+| `src/engine/drive.ts` · `tracking.ts` | wires the session to background location (task defined at load from `index.ts`), voice and run storage |
+| `src/audio/voice.ts` | expo-speech `es-ES`, queued utterances, ducks other audio only while speaking |
+| `src/data/settings.ts` | voice on/off, lead seconds, voice rate, live delta (off by default) |
+| `src/ui/DriveScreen.tsx` | ready view → safety disclaimer → big current note + next, progress, speed, time; META screen |
 | `src/ui/theme.ts` | "rally clásico" palette: dark, yellow notes, red accents; OpenFreeMap `dark` style |
 | `src/test/helpers.ts` | `buildRoad` synthetic roads (straights + arcs) for tests |
 
@@ -52,6 +57,10 @@ route (LatLon[]) → buildPath (resample every 5 m, local XY)
 - Gap <25 m → `y`; otherwise rounded to 30/50/70/100/150/200/250/300, then 100s; >1 km → "larga recta".
 - `cuidado` before grade ≤2 or hairpin after ≥250 m of straight.
 - Spoken order: `[cuidado] dirección grado|horquilla [larga] [cierra|abre] [y|distancia]`.
+
+## Simulated drive (iOS simulator)
+
+Fetch a route's coordinates and feed them as GPS: `xcrun simctl location <udid> start --speed=25 --interval=1 lat,lon lat,lon …`. Speech activity shows in `log show --predicate 'process == "Rally4ver" AND eventMessage CONTAINS "_speechJobFinished"'`. The simulator may stop delivering fixes ~100 m before the last waypoint; `location set` the end point to finish.
 
 ## Gotchas
 

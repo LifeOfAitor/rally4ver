@@ -2,7 +2,11 @@ import { mostSimilar, overlap } from '../routeMatch';
 import { buildRoad, MADRID } from '../../test/helpers';
 
 // Two ways from the same start to roughly the same finish: over the hill or round the valley.
-const hill = buildRoad([{ straight: 500 }, { turn: 'L', radius: 200, angle: 60 }, { turn: 'R', radius: 200, angle: 120 }]);
+const hill = buildRoad([
+  { straight: 500 },
+  { turn: 'L', radius: 200, angle: 60 },
+  { turn: 'R', radius: 200, angle: 120 },
+]);
 const valley = buildRoad([{ straight: 500 }, { turn: 'R', radius: 300, angle: 60 }, { straight: 600 }]);
 
 describe('overlap', () => {

@@ -26,14 +26,15 @@ import { useRouteDraft } from './useRouteDraft';
 
 interface Props {
   stage?: Stage;
-  onDone: () => void;
+  /** Called with the saved stage, or nothing when leaving without saving. */
+  onDone: (saved?: Stage) => void;
 }
 
 const SHEET_HEIGHT = 230;
 
 export function RouteEditor({ stage, onDone }: Props) {
   const insets = useSafeAreaInsets();
-  const draft = useRouteDraft(stage?.stops ?? []);
+  const draft = useRouteDraft(stage?.stops ?? [], stage?.route ?? null);
   const { stops, setStops, routes, selected, select, route, path, notes, loading, error } = draft;
   const [name, setName] = useState(stage?.name ?? '');
   const [source, setSource] = useState<StageSource>(stage?.source ?? 'mapa');
@@ -80,9 +81,12 @@ export function RouteEditor({ stage, onDone }: Props) {
         route: route.coordinates,
         distance: route.distance,
       };
-      if (stage) await updateStage(stage.id, data);
-      else await saveStage(data);
-      onDone();
+      if (stage) {
+        await updateStage(stage.id, data);
+        onDone({ ...stage, ...data });
+      } else {
+        onDone(await saveStage(data));
+      }
     } catch (e) {
       Alert.alert('No se pudo guardar', e instanceof Error ? e.message : String(e));
     } finally {
@@ -108,7 +112,7 @@ export function RouteEditor({ stage, onDone }: Props) {
       />
 
       <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-        <Pressable style={styles.iconButton} onPress={onDone} accessibilityLabel="Volver">
+        <Pressable style={styles.iconButton} onPress={() => onDone()} accessibilityLabel="Volver">
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>{stage ? 'Editar tramo' : 'Nuevo tramo'}</Text>
