@@ -21,7 +21,7 @@
     "android": {
       "package": "com.aitorgaillard.rally4ver",
       "adaptiveIcon": {
-        "backgroundColor": "#FFFFFF",
+        "backgroundColor": "#151515",
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
@@ -51,7 +51,16 @@
       "expo-font",
       "expo-status-bar",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#151515",
+          "resizeMode": "contain"
+        }
+      ]
     ]
   }
 }
