@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatKm, formatTime } from '../core/format';
 import { deleteStage, listAllRuns, listStages, type RunSummary, type Stage } from '../data/stageStore';
 import { Header, SectionTitle, SegmentBar } from './kit';
-import { colors, radius } from './theme';
+import { colors, radius, themed } from './theme';
 
 interface Props {
   onNew: () => void;
@@ -102,29 +102,31 @@ export function HomeScreen({ onNew, onOpen }: Props) {
 
 const TILE = 104;
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.card },
-  date: { textAlign: 'center', color: colors.ink, fontSize: 14, fontWeight: '600' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, paddingHorizontal: 20, justifyContent: 'flex-start' },
-  tile: {
-    width: TILE,
-    height: TILE,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    gap: 4,
-  },
-  tileName: { fontSize: 14, fontWeight: '700', color: colors.ink, textAlign: 'center' },
-  tileKm: { fontSize: 12, color: colors.muted, fontWeight: '600' },
-  addTile: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
-  empty: { color: colors.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 21 },
-  section: { paddingHorizontal: 20, gap: 14 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rowName: { fontSize: 15, fontWeight: '700', color: colors.ink },
-  rowMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.card },
+    date: { textAlign: 'center', color: colors.ink, fontSize: 14, fontWeight: '600' },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, paddingHorizontal: 20, justifyContent: 'flex-start' },
+    tile: {
+      width: TILE,
+      height: TILE,
+      borderRadius: radius.card,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      backgroundColor: colors.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 8,
+      gap: 4,
+    },
+    tileName: { fontSize: 14, fontWeight: '700', color: colors.ink, textAlign: 'center' },
+    tileKm: { fontSize: 12, color: colors.muted, fontWeight: '600' },
+    addTile: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
+    empty: { color: colors.muted, textAlign: 'center', paddingHorizontal: 32, lineHeight: 21 },
+    section: { paddingHorizontal: 20, gap: 14 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    rowName: { fontSize: 15, fontWeight: '700', color: colors.ink },
+    rowMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  }),
+);

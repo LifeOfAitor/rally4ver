@@ -6,7 +6,7 @@ import { sayTokens, silence } from '../audio/voice';
 import { GUIDE_ROWS } from '../core/guide';
 import { settingsStore } from '../data/settings';
 import { DottedCard, Header, PrimaryButton } from './kit';
-import { colors, radius } from './theme';
+import { colors, radius, themed } from './theme';
 
 /** The notes legend with a "listen" button per row. */
 export function GuideContent() {
@@ -85,57 +85,59 @@ export function GuideSheet({ visible, onClose }: { visible: boolean; onClose: ()
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.card },
-  content: { gap: 10, paddingHorizontal: 20 },
-  intro: { color: colors.inkSoft, fontSize: 15, lineHeight: 22 },
-  bold: { color: colors.ink, fontWeight: '800' },
-  scale: { flexDirection: 'row', gap: 6, marginTop: 6 },
-  scaleStep: {
-    flex: 1,
-    height: 36,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scaleTight: { backgroundColor: colors.danger, borderColor: colors.danger },
-  scaleText: { color: colors.ink, fontWeight: '900', fontSize: 16 },
-  scaleTextTight: { color: colors.onDanger },
-  scaleLegend: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  scaleLegendText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12 },
-  note: {
-    width: 118,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-  },
-  noteTight: { backgroundColor: colors.danger },
-  noteText: { color: colors.onInk, fontWeight: '900', fontSize: 15 },
-  noteTextTight: { color: colors.onDanger },
-  meaning: { flex: 1, color: colors.ink, fontSize: 14, lineHeight: 19 },
-  play: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
-  sheet: {
-    maxHeight: '90%',
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radius.card + 6,
-    borderTopRightRadius: radius.card + 6,
-    borderTopWidth: 1,
-    borderColor: colors.dots,
-    paddingTop: 20,
-    paddingBottom: 36,
-  },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.card },
+    content: { gap: 10, paddingHorizontal: 20 },
+    intro: { color: colors.inkSoft, fontSize: 15, lineHeight: 22 },
+    bold: { color: colors.ink, fontWeight: '800' },
+    scale: { flexDirection: 'row', gap: 6, marginTop: 6 },
+    scaleStep: {
+      flex: 1,
+      height: 36,
+      borderRadius: 10,
+      borderWidth: 1.5,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scaleTight: { backgroundColor: colors.danger, borderColor: colors.danger },
+    scaleText: { color: colors.ink, fontWeight: '900', fontSize: 16 },
+    scaleTextTight: { color: colors.onDanger },
+    scaleLegend: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+    scaleLegendText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 12 },
+    note: {
+      width: 118,
+      paddingVertical: 8,
+      paddingHorizontal: 8,
+      borderRadius: 12,
+      backgroundColor: colors.ink,
+      alignItems: 'center',
+    },
+    noteTight: { backgroundColor: colors.danger },
+    noteText: { color: colors.onInk, fontWeight: '900', fontSize: 15 },
+    noteTextTight: { color: colors.onDanger },
+    meaning: { flex: 1, color: colors.ink, fontSize: 14, lineHeight: 19 },
+    play: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1.5,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
+    sheet: {
+      maxHeight: '90%',
+      backgroundColor: colors.card,
+      borderTopLeftRadius: radius.card + 6,
+      borderTopRightRadius: radius.card + 6,
+      borderTopWidth: 1,
+      borderColor: colors.dots,
+      paddingTop: 20,
+      paddingBottom: 36,
+    },
+  }),
+);

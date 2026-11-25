@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
+import { useColorScheme } from 'react-native';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -11,13 +12,18 @@ import { GuideScreen } from './src/ui/NotesGuide';
 import { RouteEditor } from './src/ui/RouteEditor';
 import { SettingsScreen } from './src/ui/SettingsSheet';
 import { type Tab, TabBar } from './src/ui/TabBar';
-import { colors } from './src/ui/theme';
+import { applyTheme, colors } from './src/ui/theme';
 import { TimesScreen } from './src/ui/TimesScreen';
 import { WelcomeScreen } from './src/ui/WelcomeScreen';
 
 type Overlay = { name: 'editor'; stage?: Stage } | { name: 'drive'; stage: Stage } | null;
 
 export default function App() {
+  const themeMode = settingsStore.use((s) => s.theme);
+  const system = useColorScheme();
+  const scheme = themeMode === 'system' ? (system === 'light' ? 'light' : 'dark') : themeMode;
+  // Before rendering anything: palettes and styles read `colors` at render time.
+  applyTheme(scheme);
   const welcomed = settingsStore.use((s) => s.welcomed);
   const guideSeen = settingsStore.use((s) => s.guideSeen);
   const [tab, setTab] = useState<Tab>('tramos');
@@ -63,8 +69,11 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={{ flex: 1, backgroundColor: colors.card }}>{content}</View>
-      <StatusBar style="light" />
+      {/* Keyed by scheme so every screen re-renders with the new palette. */}
+      <View key={scheme} style={{ flex: 1, backgroundColor: colors.card }}>
+        {content}
+      </View>
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </SafeAreaProvider>
   );
 }

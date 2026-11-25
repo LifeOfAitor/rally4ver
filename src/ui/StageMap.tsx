@@ -13,7 +13,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { LatLon } from '../core/geo';
 import type { Pacenote } from '../core/pacenotes';
 import type { Path } from '../core/path';
-import { colors, MAP_STYLE } from './theme';
+import { colors, mapStyle, themed } from './theme';
 
 interface Props {
   stops: LatLon[];
@@ -136,7 +136,7 @@ export function StageMap({
   return (
     <Map
       style={StyleSheet.absoluteFill}
-      mapStyle={MAP_STYLE}
+      mapStyle={mapStyle()}
       compass={false}
       logo={false}
       touchPitch={false}
@@ -229,19 +229,21 @@ export function StageMap({
   );
 }
 
-const styles = StyleSheet.create({
-  stop: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderColor: colors.ink,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stopStart: { backgroundColor: colors.ink },
-  stopEnd: { backgroundColor: colors.ink },
-  stopText: { color: colors.ink, fontWeight: '900', fontSize: 13 },
-  stopTextInk: { color: colors.onInk },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    stop: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.card,
+      borderColor: colors.ink,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stopStart: { backgroundColor: colors.ink },
+    stopEnd: { backgroundColor: colors.ink },
+    stopText: { color: colors.ink, fontWeight: '900', fontSize: 13 },
+    stopTextInk: { color: colors.onInk },
+  }),
+);

@@ -2,6 +2,7 @@ import Storage from 'expo-sqlite/kv-store';
 
 import { DEFAULT_VOICE, VOICES, type VoiceId } from '../audio/clips';
 import { createStore } from '../lib/createStore';
+import type { ThemeMode } from '../ui/theme';
 
 export interface Settings {
   voiceEnabled: boolean;
@@ -13,6 +14,8 @@ export interface Settings {
   voiceRate: number;
   /** Live time difference vs your best run while driving. Off by default. */
   liveDelta: boolean;
+  /** Colour theme: dark (default), light, or follow the phone. */
+  theme: ThemeMode;
   /** The welcome screen was already shown. */
   welcomed: boolean;
   /** The "how to read the notes" guide was already shown. */
@@ -28,6 +31,7 @@ const DEFAULTS: Settings = {
   leadSeconds: 6,
   voiceRate: 1,
   liveDelta: false,
+  theme: 'dark',
   welcomed: false,
   guideSeen: false,
 };

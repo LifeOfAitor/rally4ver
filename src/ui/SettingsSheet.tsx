@@ -7,7 +7,13 @@ import { previewVoice } from '../audio/voice';
 import { LEAD_OPTIONS, RATE_OPTIONS, settingsStore, updateSettings } from '../data/settings';
 import { DottedCard, Header, PrimaryButton, SecondaryButton } from './kit';
 import { GuideSheet } from './NotesGuide';
-import { colors, radius } from './theme';
+import { colors, radius, themed, type ThemeMode } from './theme';
+
+const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
+  { value: 'dark', label: 'Oscuro' },
+  { value: 'light', label: 'Claro' },
+  { value: 'system', label: 'Sistema' },
+];
 
 const RATE_LABEL = ['Normal', 'Rápida', 'Muy rápida'];
 
@@ -19,6 +25,11 @@ export function SettingsContent() {
     <View style={styles.content}>
       <SecondaryButton title="Cómo leer las notas" icon="help-circle-outline" onPress={() => setGuideOpen(true)} />
       <GuideSheet visible={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      <DottedCard style={styles.block}>
+        <Text style={styles.rowLabel}>Tema</Text>
+        <Segmented options={THEME_OPTIONS} value={s.theme} onChange={(v) => updateSettings({ theme: v })} />
+      </DottedCard>
 
       <DottedCard style={styles.row}>
         <Text style={styles.rowLabel}>Voz del copiloto</Text>
@@ -139,36 +150,38 @@ function Segmented<T extends string | number>({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.card },
-  content: { gap: 12, paddingHorizontal: 20 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
-  rowInline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  block: { gap: 12 },
-  rowLabel: { color: colors.ink, fontSize: 16, fontWeight: '700' },
-  help: { color: colors.muted, fontSize: 13, lineHeight: 18 },
-  segmented: { flexDirection: 'row', gap: 8 },
-  segment: {
-    flex: 1,
-    height: 40,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
-  segmentText: { color: colors.ink, fontWeight: '700' },
-  segmentTextOn: { color: colors.onInk },
-  credits: { color: colors.muted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 8 },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: {
-    maxHeight: '88%',
-    backgroundColor: colors.card,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 20,
-    paddingBottom: 36,
-  },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.card },
+    content: { gap: 12, paddingHorizontal: 20 },
+    row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 },
+    rowInline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    block: { gap: 12 },
+    rowLabel: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+    help: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+    segmented: { flexDirection: 'row', gap: 8 },
+    segment: {
+      flex: 1,
+      height: 40,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    segmentOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
+    segmentText: { color: colors.ink, fontWeight: '700' },
+    segmentTextOn: { color: colors.onInk },
+    credits: { color: colors.muted, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 8 },
+    backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+    sheet: {
+      maxHeight: '88%',
+      backgroundColor: colors.card,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingTop: 20,
+      paddingBottom: 36,
+    },
+  }),
+);

@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, radius, type } from './theme';
+import { colors, radius, type, themed } from './theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -134,67 +134,69 @@ export function SegmentBar({ filled, total }: { filled: number; total: number })
   );
 }
 
-export const styles = StyleSheet.create({
-  pill: {
-    backgroundColor: colors.ink,
-    borderRadius: radius.pill,
-    paddingHorizontal: 22,
-    paddingVertical: 9,
-    minWidth: 150,
-    alignItems: 'center',
-  },
-  pillInverted: { backgroundColor: colors.onInk },
-  pillText: { ...type.pill, color: colors.onInk },
-  pillTextInverted: { color: colors.ink },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
-  headerSide: { width: 52 },
-  round: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.card,
-  },
-  roundInverted: { borderColor: colors.onInk, backgroundColor: 'transparent' },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    padding: 16,
-  },
-  primary: {
-    flexDirection: 'row',
-    gap: 10,
-    height: 58,
-    borderRadius: radius.button,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryText: { color: colors.onInk, fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
-  secondary: {
-    flexDirection: 'row',
-    gap: 8,
-    height: 52,
-    borderRadius: radius.button,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: { color: colors.ink, fontSize: 16, fontWeight: '700' },
-  section: { borderBottomWidth: 1.5, borderStyle: 'dotted', borderColor: colors.dots, paddingBottom: 8 },
-  sectionText: { ...type.h2, color: colors.ink },
-  segBar: { flexDirection: 'row', height: 12, width: 150 },
-  seg: { flex: 1, borderWidth: 1.5, borderColor: colors.ink, borderLeftWidth: 0, backgroundColor: colors.card },
-  segOn: { backgroundColor: colors.ink },
-  segFirst: { borderLeftWidth: 1.5, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 },
-  segLast: { borderTopRightRadius: 6, borderBottomRightRadius: 6 },
-});
+export const styles = themed(() =>
+  StyleSheet.create({
+    pill: {
+      backgroundColor: colors.ink,
+      borderRadius: radius.pill,
+      paddingHorizontal: 22,
+      paddingVertical: 9,
+      minWidth: 150,
+      alignItems: 'center',
+    },
+    pillInverted: { backgroundColor: colors.onInk },
+    pillText: { ...type.pill, color: colors.onInk },
+    pillTextInverted: { color: colors.ink },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
+    headerSide: { width: 52 },
+    round: {
+      width: 46,
+      height: 46,
+      borderRadius: 23,
+      borderWidth: 2,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.card,
+    },
+    roundInverted: { borderColor: colors.onInk, backgroundColor: 'transparent' },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: radius.card,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      padding: 16,
+    },
+    primary: {
+      flexDirection: 'row',
+      gap: 10,
+      height: 58,
+      borderRadius: radius.button,
+      backgroundColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    primaryText: { color: colors.onInk, fontSize: 17, fontWeight: '800', letterSpacing: 0.5 },
+    secondary: {
+      flexDirection: 'row',
+      gap: 8,
+      height: 52,
+      borderRadius: radius.button,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      backgroundColor: colors.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    secondaryText: { color: colors.ink, fontSize: 16, fontWeight: '700' },
+    section: { borderBottomWidth: 1.5, borderStyle: 'dotted', borderColor: colors.dots, paddingBottom: 8 },
+    sectionText: { ...type.h2, color: colors.ink },
+    segBar: { flexDirection: 'row', height: 12, width: 150 },
+    seg: { flex: 1, borderWidth: 1.5, borderColor: colors.ink, borderLeftWidth: 0, backgroundColor: colors.card },
+    segOn: { backgroundColor: colors.ink },
+    segFirst: { borderLeftWidth: 1.5, borderTopLeftRadius: 6, borderBottomLeftRadius: 6 },
+    segLast: { borderTopRightRadius: 6, borderBottomRightRadius: 6 },
+  }),
+);

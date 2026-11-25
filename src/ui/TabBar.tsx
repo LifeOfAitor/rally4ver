@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from './theme';
+import { colors, themed } from './theme';
 
 export type Tab = 'tramos' | 'tiempos' | 'ajustes';
 
@@ -36,29 +36,31 @@ export function TabBar({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => vo
   );
 }
 
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 12,
-    paddingHorizontal: 16,
-    backgroundColor: colors.soft,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-  },
-  item: {
-    width: 92,
-    height: 62,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    backgroundColor: colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  itemOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
-  label: { fontSize: 10, fontWeight: '800', color: colors.ink, letterSpacing: 0.4 },
-  labelOn: { color: colors.onInk },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      paddingTop: 12,
+      paddingHorizontal: 16,
+      backgroundColor: colors.soft,
+      borderTopLeftRadius: 26,
+      borderTopRightRadius: 26,
+    },
+    item: {
+      width: 92,
+      height: 62,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      backgroundColor: colors.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    itemOn: { backgroundColor: colors.ink, borderStyle: 'solid', borderColor: colors.ink },
+    label: { fontSize: 10, fontWeight: '800', color: colors.ink, letterSpacing: 0.4 },
+    labelOn: { color: colors.onInk },
+  }),
+);

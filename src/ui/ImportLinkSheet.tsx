@@ -18,7 +18,7 @@ import { currentLocation } from '../data/location';
 import { requestFromSharedText, resolveStops } from '../data/routing';
 import type { StageSource } from '../data/stageStore';
 import { Header, PrimaryButton, SecondaryButton } from './kit';
-import { colors, radius } from './theme';
+import { colors, radius, themed } from './theme';
 
 interface Props {
   visible: boolean;
@@ -107,39 +107,41 @@ export function ImportLinkSheet({ visible, onClose, onImported }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: {
-    backgroundColor: colors.card,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 36,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    gap: 14,
-  },
-  help: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
-  input: {
-    minHeight: 76,
-    color: colors.ink,
-    backgroundColor: colors.card,
-    borderRadius: radius.button,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    padding: 14,
-    fontSize: 14,
-    textAlignVertical: 'top',
-  },
-  error: { color: colors.danger, fontSize: 14 },
-  row: { flexDirection: 'row', gap: 12 },
-  busy: {
-    flex: 1,
-    height: 52,
-    borderRadius: radius.button,
-    backgroundColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  note: { color: colors.muted, fontSize: 12, lineHeight: 17 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+    sheet: {
+      backgroundColor: colors.card,
+      paddingTop: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 36,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      gap: 14,
+    },
+    help: { color: colors.inkSoft, fontSize: 14, lineHeight: 20 },
+    input: {
+      minHeight: 76,
+      color: colors.ink,
+      backgroundColor: colors.card,
+      borderRadius: radius.button,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      padding: 14,
+      fontSize: 14,
+      textAlignVertical: 'top',
+    },
+    error: { color: colors.danger, fontSize: 14 },
+    row: { flexDirection: 'row', gap: 12 },
+    busy: {
+      flex: 1,
+      height: 52,
+      borderRadius: radius.button,
+      backgroundColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    note: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+  }),
+);

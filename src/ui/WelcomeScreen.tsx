@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Pill } from './kit';
-import { colors } from './theme';
+import { colors, themed } from './theme';
 
 /** First-launch screen in the line-art style of the design reference. */
 export function WelcomeScreen({ onDone }: { onDone: () => void }) {
@@ -46,36 +46,38 @@ function Check({ style, size }: { style: object; size: number }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.card, alignItems: 'center', paddingHorizontal: 28 },
-  hi: { fontSize: 30, fontWeight: '800', color: colors.ink, marginTop: 40 },
-  art: { width: 320, height: 320, marginTop: 24, alignItems: 'center', justifyContent: 'center' },
-  ring: {
-    position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-  },
-  carCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.card,
-  },
-  check: {
-    position: 'absolute',
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: colors.dots,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.card,
-  },
-  text: { fontSize: 16, lineHeight: 23, color: colors.inkSoft, textAlign: 'center', marginTop: 20 },
-  next: { alignSelf: 'flex-end', padding: 8 },
-});
+const styles = themed(() =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.card, alignItems: 'center', paddingHorizontal: 28 },
+    hi: { fontSize: 30, fontWeight: '800', color: colors.ink, marginTop: 40 },
+    art: { width: 320, height: 320, marginTop: 24, alignItems: 'center', justifyContent: 'center' },
+    ring: {
+      position: 'absolute',
+      borderRadius: 999,
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+    },
+    carCircle: {
+      width: 160,
+      height: 160,
+      borderRadius: 80,
+      borderWidth: 2,
+      borderColor: colors.ink,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.card,
+    },
+    check: {
+      position: 'absolute',
+      borderWidth: 1.5,
+      borderStyle: 'dotted',
+      borderColor: colors.dots,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.card,
+    },
+    text: { fontSize: 16, lineHeight: 23, color: colors.inkSoft, textAlign: 'center', marginTop: 20 },
+    next: { alignSelf: 'flex-end', padding: 8 },
+  }),
+);
