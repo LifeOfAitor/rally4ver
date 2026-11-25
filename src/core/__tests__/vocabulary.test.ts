@@ -1,5 +1,6 @@
 import { VOICES } from '../../audio/clips';
 import vocabulary from '../../audio/vocabulary.json';
+import { GUIDE_ROWS } from '../guide';
 import type { Pacenote } from '../pacenotes';
 import { noteTokens } from '../phrase';
 
@@ -42,6 +43,11 @@ describe('voice vocabulary', () => {
   it.each(Object.keys(VOICES))('voice %s has a clip for every vocabulary entry', (id) => {
     const clips = VOICES[id as keyof typeof VOICES].clips;
     const missing = [...Object.keys(vocabulary), ','].filter((t) => !(t in clips));
+    expect(missing).toEqual([]);
+  });
+
+  it('has a clip for every word in the notes guide', () => {
+    const missing = GUIDE_ROWS.flatMap((r) => r.say).filter((t) => t !== ',' && !(t in vocabulary));
     expect(missing).toEqual([]);
   });
 });

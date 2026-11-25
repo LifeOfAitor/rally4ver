@@ -76,9 +76,8 @@ export function DriveScreen({ stage, onEdit, onClose }: Props) {
         <StatusBar style="light" />
         <Header
           title={stage.name}
-          inverted
-          left={<RoundButton icon="close" label="Parar" onPress={stop} inverted />}
-          right={voiceButton(true)}
+          left={<RoundButton icon="close" label="Parar" onPress={stop} />}
+          right={voiceButton(false)}
         />
         <Driving session={session} stageLength={stageLength} bestTime={bestTime} newRecord={newRecord} onDone={stop} />
       </View>
@@ -356,9 +355,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   noteCardTight: { backgroundColor: night.danger },
-  noteText: { color: colors.ink, fontSize: 54, fontWeight: '900', letterSpacing: 0.5 },
+  noteText: { color: night.page, fontSize: 54, fontWeight: '900', letterSpacing: 0.5 },
   noteTextTight: { color: '#FFFFFF' },
-  noteDistance: { color: colors.ink, fontSize: 22, fontWeight: '700' },
+  noteDistance: { color: night.page, fontSize: 22, fontWeight: '700' },
   followingRow: {
     flexDirection: 'row',
     alignItems: 'center',

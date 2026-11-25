@@ -160,13 +160,13 @@ export function StageMap({
           id="alt-casing"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#FFFFFF', 'line-width': 8 }}
+          paint={{ 'line-color': colors.card, 'line-width': 8 }}
         />
         <Layer
           id="alt-line"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#A0A0A0', 'line-width': 5 }}
+          paint={{ 'line-color': '#6E6E6E', 'line-width': 5 }}
         />
       </GeoJSONSource>
       <GeoJSONSource id="route" data={line}>
@@ -174,7 +174,7 @@ export function StageMap({
           id="route-casing"
           type="line"
           layout={{ 'line-join': 'round', 'line-cap': 'round' }}
-          paint={{ 'line-color': '#FFFFFF', 'line-width': 9 }}
+          paint={{ 'line-color': colors.card, 'line-width': 9 }}
         />
         <Layer
           id="route-line"
@@ -206,7 +206,7 @@ export function StageMap({
             'text-allow-overlap': true,
             'text-ignore-placement': true,
           }}
-          paint={{ 'text-color': ['case', ['==', ['get', 'tight'], 1], '#FFFFFF', '#000000'] }}
+          paint={{ 'text-color': ['case', ['==', ['get', 'tight'], 1], colors.onDanger, colors.ink] }}
         />
       </GeoJSONSource>
       {stops.map((p, i) => (

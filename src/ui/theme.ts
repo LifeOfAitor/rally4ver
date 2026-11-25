@@ -1,19 +1,20 @@
 /**
- * Monochrome line-art style: light grey page, white cards with dotted borders,
- * black pills for titles and primary actions. Red is reserved for danger
- * (very tight bends, off route). The drive screen uses the inverted palette
- * so it doesn't dazzle at night.
+ * Monochrome line-art style (from the user's reference) in dark mode: near-black
+ * background, cards with dotted borders, light pills for titles and primary
+ * actions with dark text. Red is reserved for danger (very tight bends, off
+ * route). `ink` is the foreground colour and `onInk` the text drawn on it.
  */
 export const colors = {
-  page: '#ECECEC',
-  card: '#FFFFFF',
-  soft: '#F4F4F4',
-  ink: '#151515',
-  inkSoft: '#4A4A4A',
-  muted: '#8C8C8C',
-  dots: '#A8A8A8',
-  onInk: '#FFFFFF',
-  danger: '#D7261E',
+  page: '#000000',
+  card: '#0E0E0E',
+  soft: '#181818',
+  ink: '#F2F2F2',
+  inkSoft: '#C4C4C4',
+  muted: '#8A8A8A',
+  dots: '#4A4A4A',
+  onInk: '#0E0E0E',
+  danger: '#E5372E',
+  onDanger: '#FFFFFF',
 } as const;
 
 /** Inverted palette for the drive screen. */
@@ -29,8 +30,8 @@ export const night = {
 
 export const radius = { card: 22, pill: 999, button: 18 } as const;
 
-/** Light OpenStreetMap vector tiles that match the monochrome look. */
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
+/** Dark OpenStreetMap vector tiles that match the monochrome look. */
+export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/dark';
 
 export const type = {
   pill: { fontSize: 13, fontWeight: '800' as const, letterSpacing: 0.6 },

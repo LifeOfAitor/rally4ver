@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -5,6 +6,7 @@ import { VOICES, type VoiceId } from '../audio/clips';
 import { previewVoice } from '../audio/voice';
 import { LEAD_OPTIONS, RATE_OPTIONS, settingsStore, updateSettings } from '../data/settings';
 import { DottedCard, Header, PrimaryButton, SecondaryButton } from './kit';
+import { GuideSheet } from './NotesGuide';
 import { colors, radius } from './theme';
 
 const RATE_LABEL = ['Normal', 'Rápida', 'Muy rápida'];
@@ -12,14 +14,20 @@ const RATE_LABEL = ['Normal', 'Rápida', 'Muy rápida'];
 /** Settings list, used both as the AJUSTES tab and as a sheet on the drive screen. */
 export function SettingsContent() {
   const s = settingsStore.use((x) => x);
+  const [guideOpen, setGuideOpen] = useState(false);
   return (
     <View style={styles.content}>
+      <SecondaryButton title="Cómo leer las notas" icon="help-circle-outline" onPress={() => setGuideOpen(true)} />
+      <GuideSheet visible={guideOpen} onClose={() => setGuideOpen(false)} />
+
       <DottedCard style={styles.row}>
         <Text style={styles.rowLabel}>Voz del copiloto</Text>
         <Switch
           value={s.voiceEnabled}
           onValueChange={(v) => updateSettings({ voiceEnabled: v })}
-          trackColor={{ true: colors.ink }}
+          trackColor={{ true: colors.muted, false: colors.soft }}
+          thumbColor={s.voiceEnabled ? colors.ink : colors.muted}
+          ios_backgroundColor={colors.soft}
         />
       </DottedCard>
 
@@ -58,7 +66,9 @@ export function SettingsContent() {
           <Switch
             value={s.liveDelta}
             onValueChange={(v) => updateSettings({ liveDelta: v })}
-            trackColor={{ true: colors.ink }}
+            trackColor={{ true: colors.muted, false: colors.soft }}
+            thumbColor={s.liveDelta ? colors.ink : colors.muted}
+            ios_backgroundColor={colors.soft}
           />
         </View>
         <Text style={styles.help}>

@@ -7,6 +7,7 @@ import { settingsStore, updateSettings } from './src/data/settings';
 import type { Stage } from './src/data/stageStore';
 import { DriveScreen } from './src/ui/DriveScreen';
 import { HomeScreen } from './src/ui/HomeScreen';
+import { GuideScreen } from './src/ui/NotesGuide';
 import { RouteEditor } from './src/ui/RouteEditor';
 import { SettingsScreen } from './src/ui/SettingsSheet';
 import { type Tab, TabBar } from './src/ui/TabBar';
@@ -18,12 +19,15 @@ type Overlay = { name: 'editor'; stage?: Stage } | { name: 'drive'; stage: Stage
 
 export default function App() {
   const welcomed = settingsStore.use((s) => s.welcomed);
+  const guideSeen = settingsStore.use((s) => s.guideSeen);
   const [tab, setTab] = useState<Tab>('tramos');
   const [overlay, setOverlay] = useState<Overlay>(null);
 
   let content;
   if (!welcomed) {
     content = <WelcomeScreen onDone={() => updateSettings({ welcomed: true })} />;
+  } else if (!guideSeen) {
+    content = <GuideScreen onDone={() => updateSettings({ guideSeen: true })} />;
   } else if (overlay?.name === 'editor') {
     content = (
       <RouteEditor
@@ -60,7 +64,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <View style={{ flex: 1, backgroundColor: colors.card }}>{content}</View>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </SafeAreaProvider>
   );
 }

@@ -15,6 +15,8 @@ export interface Settings {
   liveDelta: boolean;
   /** The welcome screen was already shown. */
   welcomed: boolean;
+  /** The "how to read the notes" guide was already shown. */
+  guideSeen: boolean;
 }
 
 export const LEAD_OPTIONS = [4, 6, 8];
@@ -27,6 +29,7 @@ const DEFAULTS: Settings = {
   voiceRate: 1,
   liveDelta: false,
   welcomed: false,
+  guideSeen: false,
 };
 
 const KEY = 'settings';

@@ -259,6 +259,8 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     gap: 14,
     shadowColor: '#000',
+    borderTopWidth: 1,
+    borderColor: colors.dots,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: -4 },
@@ -308,7 +310,7 @@ const styles = StyleSheet.create({
   },
   chipTight: { backgroundColor: colors.danger, borderStyle: 'solid', borderColor: colors.danger },
   chipText: { color: colors.ink, fontWeight: '800', fontSize: 13 },
-  chipTextTight: { color: colors.onInk },
+  chipTextTight: { color: colors.onDanger },
   saveRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20 },
   nameInput: {
     flex: 1,

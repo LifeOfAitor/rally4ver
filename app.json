@@ -5,8 +5,8 @@
     "version": "0.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "backgroundColor": "#FFFFFF",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E0E0E",
     "ios": {
       "bundleIdentifier": "com.aitorgaillard.rally4ver",
       "supportsTablet": false,
